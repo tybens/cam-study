@@ -6,12 +6,15 @@ import numpy as np
 import argparse  # python command line flags
 
 from itertools import combinations
+from sklearn.model_selection import train_test_split
 
-from app.utils import superlearner_eval
+from utils import superlearnerFitAndSave
 from prepModel import prep
 from cleaning import str2bool
 
 def main():
+    ALLSCORES = []
+    
     script_dir = os.path.dirname(os.path.abspath(__file__))
     dest_dir = os.path.join(script_dir, 'models', LABEL, 'expanded')
     try:
@@ -49,14 +52,15 @@ def main():
             # drop the columns that are NaNs
             data_dropped = data_matched.drop(cols, 1)
             name = ','.join(cols)
-
+            
+            X = data_dropped.drop('admit_binary', axis=1)
+            y = data_dropped['admit_binary']
+            X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=False)
+            
             # fit the data with dropped cols to new models
-            mymodels, mymeta_model = superlearner_eval(data_dropped,
-                                                       MasterModelList[0],
-                                                       MasterModelList[1],
-                                                       model_name=name,
-                                                       full_fit=True)
+            scores, mymodels, mymeta_model = superlearnerFitAndEval(X_train, X_test, y_train, y_test, MasterModelList[0], MasterModelList[1], model_name=name, full_fit=True, optimized=True)
 
+            ALLSCORES.append(scores)
             # save the models
             filename = './models/{}/expanded/MasterModel{}.sav'.format(LABEL, uid)
             MasterModel = [mymodels, mymeta_model]
@@ -73,6 +77,8 @@ def main():
     df_id = pd.DataFrame(np.array([unique_id, names]).T, columns=['id', 'name'])
     filename = './models/{}/expanded/df_id.sav'.format(LABEL)
     pickle.dump(df_id, open(filename, 'wb'))
+    
+    return ALLSCORES
 
 if __name__ == '__main__':
     
@@ -83,7 +89,9 @@ if __name__ == '__main__':
     LABEL = args.LABEL
     VITALS = False if 'n' in LABEL else True
     
-    main()
+    ALLSCORES = main()
+    
+    pd.DataFrame(ALLSCORES).to_csv('./models/{}/ALLEXPANDEDSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
     
         
     

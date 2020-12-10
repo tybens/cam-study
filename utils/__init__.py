@@ -52,12 +52,6 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
     """
     BETA=beta
     
-    # if need to fit the data, split it up into train and test. if not we can use all of X and y
-    if full_fit:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=100, shuffle=False)
-    else:
-        X_test, y_test = X, y
-    
     # create a list of base-models
     def get_models():
         models = list()

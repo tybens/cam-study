@@ -318,7 +318,7 @@ def SL():
 
     def create_model(trial):
         model_names = list()
-        optimized_models = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET']
+        optimized_models = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET']
         models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
 
         head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
@@ -391,14 +391,15 @@ if __name__ == '__main__':
     LABEL = args.LABEL
     ALL_DATA = args.ALL_DATA
     
-    TOTEST = ['OAXGB', 'OBXGB', 'OALGBM', 'OBLGBM', 'OPXGB', 'OPLGBM','OPRF','OPABC', 'OPKNN', 'OPET', 'OPDT','OPSL', 'OBSL']
+#     TOTEST = ['OAXGB', 'OBXGB', 'OALGBM', 'OBLGBM', 'OPXGB', 'OPLGBM','OPRF','OPABC', 'OPKNN', 'OPET', 'OPDT','OPSL', 'OBSL']
+    TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET'] # ALL THE MODELS MWAHAHAHA
 
 
     if CLEAN:
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
     else:
         if VITALS:
-            filename = './models/{}/data_vitals_cleaned_{}.csv'.format(LABEL, LABEL)
+            filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
             df = pd.read_csv(filename)
         else:
             filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
@@ -438,7 +439,7 @@ if __name__ == '__main__':
     X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2,random_state=RAND_STATE, shuffle=False)
 
     # MULTIPROCESSING:
-    num_cores = 7#int(os.getenv('SLURM_CPUS_PER_TASK')) # can't be 8, so making it 7
+    num_cores = 7 #int(os.getenv('SLURM_CPUS_PER_TASK')) # can't be 8, so making it 7
     
     jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC
     
@@ -462,4 +463,7 @@ if __name__ == '__main__':
     #    mdict will have been updated with optimized parameters
     scores_indep.extend(SL())
     
+    print(scores)
+    
     # TODO: save scores_indep
+    pd.DataFrame(scores).to_csv('./models/{}/ALLSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
