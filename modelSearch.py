@@ -30,7 +30,7 @@ from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # local relative imports:
-from cleaning import clean, str2bool
+from utils.cleaning import clean, str2bool # clean for processing data, str2bool for command line operability
 from utils import superlearnerFitAndEval
 
 class Optimizer:
@@ -463,7 +463,7 @@ if __name__ == '__main__':
     #    mdict will have been updated with optimized parameters
     scores_indep.extend(SL())
     
-    print(scores)
+    print(scores_indep)
     
     # TODO: save scores_indep
-    pd.DataFrame(scores).to_csv('./models/{}/ALLSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
+    pd.DataFrame(scores_indep).to_csv('./models/{}/ALLSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
