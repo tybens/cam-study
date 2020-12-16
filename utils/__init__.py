@@ -64,41 +64,27 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
     def get_out_of_fold_predictions(X, y, models):
         meta_X, meta_y = list(), list()
         # define split of data
-        if not one_sample:
-            kfold = KFold(n_splits=10, shuffle=True)
-            # enumerate splits
-            for train_ix, test_ix in kfold.split(X):
-                fold_yhats = list()
-                # get data
-                train_X, test_X = X.iloc[train_ix], X.iloc[test_ix]
-                train_y, test_y = y.iloc[train_ix], y.iloc[test_ix]
-                meta_y.extend(test_y)
-                # fit and make predictions with each sub-model
-                for model in models:
-                    if full_fit:
-                        model.fit(train_X, train_y)
-                    if hasattr(model, 'predict_proba'):
-                        yhat = model.predict_proba(test_X)
-                    else:
-                        temp = model.predict(test_X)
-                        yhat = np.column_stack(([int(not z) for z in temp], temp))
-                    # store columns
-                    fold_yhats.append(yhat)
-                # store fold yhats as columns
-                meta_X.append(hstack(fold_yhats))
-        else: 
-            # if just one sample
+        kfold = KFold(n_splits=10, shuffle=True)
+        # enumerate splits
+        for train_ix, test_ix in kfold.split(X):
+            fold_yhats = list()
+            # get data
+            train_X, test_X = X.iloc[train_ix], X.iloc[test_ix]
+            train_y, test_y = y.iloc[train_ix], y.iloc[test_ix]
+            meta_y.extend(test_y)
+            # fit and make predictions with each sub-model
             for model in models:
                 if full_fit:
-                    model.fit(X, y)
+                    model.fit(train_X, train_y)
                 if hasattr(model, 'predict_proba'):
-                    yhat = model.predict_proba(X)
+                    yhat = model.predict_proba(test_X)
                 else:
-                    temp = model.predict(X)
+                    temp = model.predict(test_X)
                     yhat = np.column_stack(([int(not z) for z in temp], temp))
                 # store columns
-                meta_X.append(yhat)
-            meta_X = hstack(meta_X)
+                fold_yhats.append(yhat)
+            # store fold yhats as columns
+            meta_X.append(hstack(fold_yhats))
         return vstack(meta_X), asarray(meta_y)
 
     # fit all base models on the training dataset

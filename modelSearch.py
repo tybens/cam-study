@@ -110,7 +110,7 @@ def getScores(model):
     return scores
     
 def optimizeAndSaveScores(model, m):
-    global score_queue, preds
+    global preds
     
     optimizer = Optimizer(m[:2])
     model_params = optimizer.optimize()
@@ -123,13 +123,13 @@ def optimizeAndSaveScores(model, m):
     evalModel(m)
     confMat()
     
-    score_queue.put(getScores(optimizedModel))
-    return {m: model(**model_params)}
+    retscore = getScores(optimizedModel)
+    return {m: model(**model_params)}, retscore
     
 def baselineThenOptimize(model, label):
-    global m, score_queue
+    global m
     retdict = {}
-    
+    retscores = []
     if label in TOTEST:
         m = label
         if m[-3:] != 'KNN':
@@ -140,16 +140,18 @@ def baselineThenOptimize(model, label):
         preds = baselineModel.predict(X_test)
         evalModel(m)
         confMat()
-        score_queue.put(getScores(baselineModel))
+        retscores.append(getScores(baselineModel))
         
     for metric in metrics:
         m = metric+label
         if m in TOTEST:
-            retdict.update(optimizeAndSaveScores(model, m))
+            paramdict, retscore = optimizeAndSaveScores(model, m)
+            retdict.update(paramdict)
+            retscores.append(retscore)
  
         
     print('---------------------------------------------------')
-    out_queue.put(retdict)
+    return retscores, retdict
 
     
 def RF(out_queue, score_queue):
@@ -165,10 +167,12 @@ def RF(out_queue, score_queue):
         model = RandomForestClassifier(min_samples_leaf=min_samples_leaf, n_estimators=n_estimators, max_depth=max_depth, random_state=RAND_STATE, class_weight=weights)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
 def XGB(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = XGBClassifier
     label = 'XGB'
@@ -183,11 +187,13 @@ def XGB(out_queue, score_queue):
         model = XGBClassifier(learning_rate=learning_rate, n_estimators=n_estimators, min_child_weight=min_child_weight, reg_lambda=reg_lambda, max_depth=max_depth, gamma=gamma, random_state=RAND_STATE, scale_pos_weight=scale_pos_weight)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
     
 
 def LGBM(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = LGBMClassifier
     label = 'LGBM'
@@ -202,10 +208,12 @@ def LGBM(out_queue, score_queue):
                                random_state=RAND_STATE, is_unbalance=False)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
 def LR(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     if 'LR' in TOTEST:
         m = 'LR'
@@ -214,11 +222,11 @@ def LR(out_queue, score_queue):
         preds = lr.predict(X_test)
         evalModel(m, preds)
         confMat()
+        
     print('---------------------------------------------------')
 
 
 def DT(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = DecisionTreeClassifier
     label = 'DT'
@@ -233,11 +241,13 @@ def DT(out_queue, score_queue):
                                        min_samples_leaf=min_samples_leaf, random_state=RAND_STATE, class_weight=weight_dict)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
     
 def BC(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = BaggingClassifier
     label = 'BC'
@@ -251,7 +261,6 @@ def BC(out_queue, score_queue):
     baselineThenOptimize(model, label)
 
 def KNN(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = KNeighborsClassifier
     label = 'KNN'
@@ -262,10 +271,12 @@ def KNN(out_queue, score_queue):
         model = KNeighborsClassifier(n_neighbors=n_neighbors)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
 def ABC(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = AdaBoostClassifier
     label = 'ABC'
@@ -276,10 +287,12 @@ def ABC(out_queue, score_queue):
         model = AdaBoostClassifier(n_estimators=n_estimators, learning_rate=learning_rate, random_state=RAND_STATE)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
 def ET(out_queue, score_queue):
-    retdict = {}
     global create_model, y_test, preds
     model = ExtraTreesClassifier
     label = 'ET'
@@ -290,7 +303,10 @@ def ET(out_queue, score_queue):
         model = ExtraTreesClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=RAND_STATE, class_weight=weight_dict)
         return model
     
-    baselineThenOptimize(model, label)
+    retscores, retdict = baselineThenOptimize(model, label)
+    
+    score_queue.put(retscores)
+    out_queue.put(retdict)
 
 
 def SL_fit_and_save(mode, result, head):
@@ -392,7 +408,7 @@ if __name__ == '__main__':
     ALL_DATA = args.ALL_DATA
     
 #     TOTEST = ['OAXGB', 'OBXGB', 'OALGBM', 'OBLGBM', 'OPXGB', 'OPLGBM','OPRF','OPABC', 'OPKNN', 'OPET', 'OPDT','OPSL', 'OBSL']
-    TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET'] # ALL THE MODELS MWAHAHAHA
+    TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET', 'OPSL', 'OBSL', 'OCSL', 'OASL'] # ALL THE MODELS MWAHAHAHA (INCLUDING SL!!!)
 
 
     if CLEAN:
@@ -441,7 +457,7 @@ if __name__ == '__main__':
     # MULTIPROCESSING:
     num_cores = 7 #int(os.getenv('SLURM_CPUS_PER_TASK')) # can't be 8, so making it 7
     
-    jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC
+    jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC (and LR)
     
     metrics = ['OA', 'OF', 'OB', 'OR', 'OP', 'OC']
     
