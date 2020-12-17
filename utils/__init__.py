@@ -1,7 +1,12 @@
-
+# tybens 11/04/20
+import pickle
 import pandas as pd
 import numpy as np
+
+# data manip
 from numpy import hstack, vstack, asarray
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 
 # models
 from sklearn.neighbors import KNeighborsClassifier

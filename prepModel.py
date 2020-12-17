@@ -52,10 +52,8 @@ def prep(VITALS, LABEL, OPTIMIZED=None, EXPANDING=False, DATA_MATCH=None, IDX=No
         
     if VITALS:
         data_clean_match = pd.read_csv('./models/{}/data_vitals_cleaned_{}.csv'.format(LABEL, LABEL))
-        raw_data = pd.read_csv('./data/data_vitals.csv')
     else:
         data_clean_match = pd.read_csv('./models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL))
-        raw_data = pd.read_csv('./data/data.csv')
 
         
     if not EXPANDING:

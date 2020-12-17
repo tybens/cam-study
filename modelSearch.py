@@ -34,6 +34,8 @@ from utils.cleaning import clean, str2bool # clean for processing data, str2bool
 from utils import superlearnerFitAndEval
 
 class Optimizer:
+    """ Optimization suite as adapted from optuna's framework
+    """
     def __init__(self, metric, trials=50):
         self.metric = metric
         self.trials = trials
@@ -76,17 +78,33 @@ class Optimizer:
         return study.best_params
     
 def confMat():
+    """ Verbose printing of a confusion matrix of each optimized base model
+    """
     print(confusion_matrix(y_test, preds))
     
 
 def evalModel(m):
+    """ Verbose printing of threshold scores, mainly for tracking progress of script
+    
+    """
     print(m + ' accuracy: ', accuracy_score(y_test, preds))
     print(m + ' f1-score: ', f1_score(y_test, preds))
     print(m + ' fbeta-score: ', fbeta_score(y_test, preds, beta=BETA))
     print(m + ' recall: ', recall_score(y_test, preds))
     
 def getScores(model):
+    """ Function for scoring the provided model
     
+    Arguments
+    ---------
+    model: object
+        A callable model object that has .fit, .predict, and ideally .predict_proba methods
+        
+    Returns
+    -------
+    list({str, float})
+        a list of scores for the optimized model passed as an argument    
+    """
     AUROC, AUPRC = None, None
     
     if hasattr(model, 'decision_function'):
@@ -110,6 +128,25 @@ def getScores(model):
     return scores
     
 def optimizeAndSaveScores(model, m):
+    """ Sets up optimization suite, optimizes the model, tests and returns score and optimized params
+    
+    The optimization scoring metric is obtained from the str label, m, and optuna is used to optimally tune the
+    hyperparameters. 'KNN' doesn't have a 'random_state' apparently.
+    
+    Arguments
+    ---------
+    model: object
+        A callable model object that has .fit, .predict, and ideally .predict_proba methods
+    m: str
+        String label of the model. i.e. 'OAKNN', 'optimized on accuracy KNeighborsClassifier model'
+    
+    Returns
+    -------
+    tuple(dict(), list({str, float}))
+        First item is a dict returning optimized params, second item is a list of scores for
+        the optimized model.
+    
+    """
     global preds
     
     optimizer = Optimizer(m[:2])
@@ -127,6 +164,23 @@ def optimizeAndSaveScores(model, m):
     return {m: model(**model_params)}, retscore
     
 def baselineThenOptimize(model, label):
+    """ Train and test an unoptimized 'baseline' then optimize a model for each metric.
+    
+    Arguments
+    ----------
+    model: object
+        A callable model object that has .fit, .predict, and ideally .predict_proba methods
+    label: string
+        a string representation of the model and scoring metric. i.e. 'OAKNN', 'optimized 
+        on accuracy KNeighborsClassifier model'
+    
+    Returns
+    -------
+    tuple(list(list({str, float})), dict)
+        a tuple with the first item being a two-dimensional array of scores for each
+        model optimized on each metric. The second item is a dictionary with {label: modelparams}
+        for each model, returning optimized params.
+    """
     global m
     retdict = {}
     retscores = []
@@ -310,6 +364,26 @@ def ET(out_queue, score_queue):
 
 
 def SL_fit_and_save(mode, result, head):
+    """ Function for final testing and saving of optimized super learner ensemble
+    
+    The final scores of the optimized model ensemble are obtained, the models are pickled as a python 
+    list of baselearners and a metamodel in the models/{LABEL} directory. 
+    
+    Arguments
+    ---------
+    mode: str
+        A string label for the model type: {'OPSL', 'OASL', 'OBSL', 'OCSL', 'ORSL'}.
+    result: list(str)
+        A list of baselearners represented by their name, to be found in mdict[baselearner]
+    head: str
+        A string model name to be used as the meta learner in the super learner ensemble
+        
+    Returns
+    -------
+    list({str, float})
+        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, accuracy, f1_score, fbeta score, recall]
+    
+    """
     baseModels = list()
     for item in result:
         baseModels.append(mdict[item])
@@ -328,6 +402,19 @@ def SL_fit_and_save(mode, result, head):
     return scores
     
 def SL():
+    """Function for optimization of super learner ensembles
+    
+    Optuna is used to test combinations of optimized models (only if they are explicitly contained in TOTEST).
+    For each metric that is in `metrics`, a super learner ensemble is tested and optimized and saved.
+    After optimization, `SL_fit_and_save` is called for final testing and saving of models and scores.
+        
+    Returns
+    -------
+    list(list({str, float}))
+        A two dimensional list of the scores for each super learner ensemble. 
+        Each row has this structure: [label of model, AUROC, AUPRC, accuracy, f1_score, fbeta score, recall]
+    
+    """
     scores = []
     sampler = TPESampler(seed=0)
     label = 'SL'
@@ -414,12 +501,8 @@ if __name__ == '__main__':
     if CLEAN:
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
     else:
-        if VITALS:
-            filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
-            df = pd.read_csv(filename)
-        else:
-            filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
-            df = pd.read_csv(filename)
+        filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
+        df = pd.read_csv(filename)
 
     print("# OF FEATURES: {}  |  # OF PATIENTS: {}".format(len(df.columns)-1, len(df)))
     print("RAND_STATE: {}    |  BETA:   {}".format(RAND_STATE, BETA))

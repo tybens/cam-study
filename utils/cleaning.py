@@ -11,8 +11,8 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
     
     Arguments
     ---------
-    VITALS : boolean
-        A boolean for whether or not the data is `data_vitals.csv` or `data.csv`
+    VITALS: boolean
+        A boolean for whether or not to remove all vital-based columns before returning a cleaned dataframe.
     NUM_UNIQUE_CCS : int
         Integer amount of max number of unique Chief Complaints to care about when encoding.
     SUBSET_SIZE : int
@@ -24,12 +24,13 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
     SAVE_CLEANED : boolean
         Boolean for whether or not to save the data to `models/$LABEL/data_cleaned_$LABEL.csv`
     
+    Returns
+    -------
+    object(pandas.DataFrame)
+        A dataframe that holds the cleaned and processed data.
     
     """
-    if VITALS:
-        df1 = pd.read_csv('./data/data_vitals.csv')
-    else:
-        df1 = pd.read_csv('./data/data.csv')
+    df1 = pd.read_csv('./data/data.csv')
     
     if ALL_DATA:
         df = df1.copy()
@@ -42,15 +43,12 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
     df.drop_duplicates(inplace=True)
 
     # changing those who left "Against Medical Advice" and Expired to be considered admitted
-    df.loc[(df.Disposition == 'AMA') | (df.Disposition == 'Expired'), 'Admit'] = 1
+    df.loc[(df.Disposition == 'AMA') | (df.Disposition == 'Expired') | (df.Disposition == 'Send to Specialty Department'), 'Admit'] = 1
 
     # -------------
     # ---lumps long tail of uncommon chief complaints as 'other' as well as combining the separate columns into one (comma separated strings)---
 
     ccs = ['Chief_Complaint', 'Chief_Complaint_2']
-    if not VITALS:
-        [ccs.append('Chief_Complaint_' + str(i)) for i in range(3, 6+1)]
-
     # get all values in all chief complaints (including NaNs)
     vals = []
     [vals.extend(df[i].values) for i in ccs]
@@ -100,32 +98,28 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
     df[to_string_cols] = df[to_string_cols].convert_dtypes()
 
 
-    if VITALS:
-        DROP_COLUMNS = ['UniqueID']
-        df.drop(DROP_COLUMNS, axis=1, inplace=True) 
-        # -- BP separation -- 
-        df = pd.concat([df.drop(['BP'], axis=1), df['BP'].str.split(pat='/', n=0, expand=True)], 1)
-        df.rename(columns={0:'BP_sys', 1:'BP_dia'}, inplace=True)
-        df[['BP_sys', 'BP_dia']] = df[['BP_sys', 'BP_dia']].astype('float64')
+    DROP_COLUMNS = ['UniqueID']
+    df.drop(DROP_COLUMNS, axis=1, inplace=True) 
+    # -- BP separation -- 
+    df = pd.concat([df.drop(['BP'], axis=1), df['BP'].str.split(pat='/', n=0, expand=True)], 1)
+    df.rename(columns={0:'BP_sys', 1:'BP_dia'}, inplace=True)
+    df[['BP_sys', 'BP_dia']] = df[['BP_sys', 'BP_dia']].astype('float64')
 
-        # thresholds
-        df['temp_thresh'] = ((df['temp'] >= 104) & (df['age_group'] != 'Pediatric')).astype('int')
-        df['O2_thresh'] = (df['O2'] < 85).astype('int')
-        df['BP_sys_thresh'] = ((df['BP_sys'] < 80) & (df['age_group'] != 'Pediatric')).astype('int')
-        df['RR_thresh'] = ((df['RR'] > 40) & (df['age_group'] != 'Pediatric')).astype('int')
+    # thresholds
+    df['temp_thresh'] = ((df['temp'] >= 104) & (df['age_group'] != 'Pediatric')).astype('int')
+    df['O2_thresh'] = (df['O2'] < 85).astype('int')
+    df['BP_sys_thresh'] = ((df['BP_sys'] < 80) & (df['age_group'] != 'Pediatric')).astype('int')
+    df['RR_thresh'] = ((df['RR'] > 40) & (df['age_group'] != 'Pediatric')).astype('int')
 
     #----------
     # ------ cleaning (feature extraction, one hot encoding of categoricals, thresholding)
 
     # add number of CCs as a feature
     df['CC_num'] = df['CCs'].apply(lambda x: x.count(",") + 1)
-
+    df.loc[df['CCs'] == '', 'CC_num'] = 0
 
     # one hot encode categoricals
-    categorical = ['age_group', 'sex', 'month']
-
-    if VITALS:
-        categorical.append('year')
+    categorical = ['age_group', 'sex', 'month', 'year']
 
     for cat in categorical:
         df = pd.concat([df.drop(cat, axis=1), pd.get_dummies(df[cat], prefix=cat)], 1)
@@ -133,6 +127,11 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
     # encode CCs
     df = pd.concat([df.drop(['CCs'], axis=1), df['CCs'].str.get_dummies(sep=",").add_prefix('CC_')], 1)
 
+    if not VITALS:
+        # drop vital columns if we are training a non vital model
+        vital_cols = ['temp_thresh', 'RR_thresh', 'BP_sys_thresh', 'temp_thresh', 'O2_thresh', 'BP_sys', 'BP_dia', 'O2', 'RR', 'HR', 'temp']
+        df.drop(vital_cols, axis=1, inplace=True)
+    
     # drop unnecessary binary onehot encoded
         # arrival_mode only significant if more than binary! 
         # SEX HAS MORE THAN 2 UNIQUE!! so don't drop
