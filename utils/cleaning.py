@@ -30,7 +30,7 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
         A dataframe that holds the cleaned and processed data.
     
     """
-    df1 = pd.read_csv('./data/data.csv')
+    df1 = pd.read_csv('./data/data_vitals.csv')
     
     if ALL_DATA:
         df = df1.copy()

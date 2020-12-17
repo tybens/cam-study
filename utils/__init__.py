@@ -108,14 +108,14 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
         for model in models:
             if hasattr(model, 'decision_function'):
                 y_score = model.decision_function(X)
-                rocscore = auc_roc_score(y, y_score)
+                rocscore = roc_auc_score(y, y_score)
                 prcscore = average_precision_score(y, y_score)
                 if optimized:
                     print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
                     print('%s AUPRC-score: %.3f' % (model.__class__.__name__, prcscore))
             elif hasattr(model, 'predict_proba'):
                 y_score = model.predict_proba(X)[:, 1]
-                rocscore = auc_roc_score(y, y_score)
+                rocscore = roc_auc_score(y, y_score)
                 prcscore = average_precision_score(y, y_score)
                 if optimized:
                     print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
