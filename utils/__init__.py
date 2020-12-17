@@ -175,9 +175,9 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
     
     works = True # whether or not we can do thresholding!
     if hasattr(mymeta_model, 'decision_function'):
-        y_score = superlearner_predict(X_test, new_models, mymeta_model, predict_proba=False, decision_function=True)
+        y_score = superlearnerPredict(X_test, new_models, mymeta_model, predict_proba=False, decision_function=True)
     elif hasattr(mymeta_model, 'predict_proba'):
-        y_score = superlearner_predict(X_test, new_models, mymeta_model, predict_proba=True)
+        y_score = superlearnerPredict(X_test, new_models, mymeta_model, predict_proba=True)
         try:
             y_score = y_score[:, 1]
         except IndexError:
