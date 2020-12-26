@@ -8,6 +8,7 @@ import os
 import argparse  # python command line flags
 import multiprocessing as mp # multiprocessing!
 import warnings
+import copy
 
 # related thirdparty imports
 import matplotlib.pyplot as plt
@@ -388,17 +389,17 @@ def SL_fit_and_save(mode, result, head):
     for item in result:
         baseModels.append(mdict[item])
     
-    metaModel = mdict[head]
+    metaModel = copy.deepcopy(mdict[head])
     
-    scores, models, meta_model = superlearnerFitAndEval(X_train, X_test, y_train, y_test, 
-                                                        models, head, model_name=mode, 
+    scores, models, meta_model, basemodelScores = superlearnerFitAndEval(X_train, X_test, y_train, y_test, 
+                                                        baseModels, metaModel, model_name=mode, 
                                                         full_fit=True, optimized=True)
-
     filename = './models/{}/models_{}_{}.sav'.format(LABEL, mode, LABEL)
     pickle.dump(models, open(filename, 'wb'))
     filename = './models/{}/metamodel_{}_{}.sav'.format(LABEL, mode, LABEL)
     pickle.dump(meta_model, open(filename, 'wb'))
-    
+    scores.extend(basemodelScores) # extend because basemodelScores is 2 dimensional
+
     return scores
     
 def SL():
@@ -421,7 +422,7 @@ def SL():
 
     def create_model(trial):
         model_names = list()
-        optimized_models = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET']
+        optimized_models = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET']
         models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
 
         head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
@@ -437,7 +438,7 @@ def SL():
         for item in model_names:
             models.append(mdict[item])
         head = trial.suggest_categorical('head', head_list)
-        head = mdict[head]
+        head = copy.deepcopy(mdict)[head]
         return models, head
     
     for metric in metrics:
@@ -465,7 +466,7 @@ def SL():
                 if value not in result:
                     result.append(value)
 
-            scores.append(SL_fit_and_save(m, result, head))
+            scores.extend(SL_fit_and_save(m, result, head)) # extend because SL_fit_and_save returns 2-d array
             
     return scores
     
@@ -495,8 +496,8 @@ if __name__ == '__main__':
     ALL_DATA = args.ALL_DATA
     
 #     TOTEST = ['OAXGB', 'OBXGB', 'OALGBM', 'OBLGBM', 'OPXGB', 'OPLGBM','OPRF','OPABC', 'OPKNN', 'OPET', 'OPDT','OPSL', 'OBSL']
-    TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET', 'OPSL', 'OBSL', 'OCSL', 'OASL'] # ALL THE MODELS MWAHAHAHA (INCLUDING SL!!!)
-
+#     TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET', 'OPSL', 'OBSL', 'OCSL', 'OASL'] # ALL THE MODELS MWAHAHAHA (INCLUDING SL!!!) (ExCLUDING BC!) 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC',
+    TOTEST = ['OPSL', 'OBSL', 'OCSL', 'OASL'] # Debugging SL
 
     if CLEAN:
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
@@ -536,7 +537,7 @@ if __name__ == '__main__':
     y = df['admit_binary']
 
     X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2,random_state=RAND_STATE, shuffle=False)
-
+    print(X_train.shape, X_test.shape)
     # MULTIPROCESSING:
     num_cores = 7 #int(os.getenv('SLURM_CPUS_PER_TASK')) # can't be 8, so making it 7
     

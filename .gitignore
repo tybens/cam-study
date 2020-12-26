@@ -8,6 +8,8 @@ __pycache__/
 .ipynb_checkpoints/
 .nfs*
 
+# Personal files
+scores_for_table-study10k.csv
 
 # Files too large for github
 models/

@@ -27,7 +27,7 @@ from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.utils import compute_class_weight
 
 
-def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_model, model_name=None, beta=3, full_fit=False, optimized=False):
+def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_model, df_all_data=None, model_name=None, beta=3, full_fit=False, optimized=False):
     """ evaluates a pair of models/metamodel on a given dataset, can fit the models if desired. 
     
     also,  scores  needs to be initalized in the scope, it will append the model name, test-sample-size, accuracy, ROC AUC, Precision-Recall AUC, fbeta, f-score.
@@ -56,13 +56,17 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
         If optimized = True. returns tuple of (list(scores), mymodels, mymeta_model) refit on the data.
     """
     BETA=beta
-    
+    if df_all_data != None:
+        # scoring the SL model on all data (IF df_all_data IS PARSED EXPLICITLY)
+        y_test = df_all_data.admit_binary
+        X_test = df_all_data.drop('admit_binary', axis=1)
+            
     # create a list of base-models
     def get_models():
         models = list()
 
         models.extend(mymodels)
-
+            
         return models
 
     # collect out of fold predictions form k-fold cross validation
@@ -94,8 +98,11 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
 
     # fit all base models on the training dataset
     def fit_base_models(X, y, models):
+        new_models = []
         for model in models:
             model.fit(X, y)
+            new_models.append(model)
+        return new_models
 
     # fit a meta model
     def fit_meta_model(X, y):
@@ -105,30 +112,30 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
 
     # evaluate a list of models on a dataset
     def evaluate_models(X, y, models):
+        basemodelScores = []
         for model in models:
             if hasattr(model, 'decision_function'):
                 y_score = model.decision_function(X)
                 rocscore = roc_auc_score(y, y_score)
                 prcscore = average_precision_score(y, y_score)
-                if optimized:
-                    print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
-                    print('%s AUPRC-score: %.3f' % (model.__class__.__name__, prcscore))
+                print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
+                print('%s AUPRC-score: %.3f' % (model.__class__.__name__, prcscore))
+                basemodelScores.append([model_name, model.__class__.__name__, rocscore, prcscore])
             elif hasattr(model, 'predict_proba'):
                 y_score = model.predict_proba(X)[:, 1]
                 rocscore = roc_auc_score(y, y_score)
                 prcscore = average_precision_score(y, y_score)
-                if optimized:
-                    print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
-                    print('%s AUPRC-score: %.3f' % (model.__class__.__name__, prcscore))
+                print('%s AUROC-score: %.3f' % (model.__class__.__name__, rocscore))
+                print('%s AUPRC-score: %.3f' % (model.__class__.__name__, prcscore))
+                basemodelScores.append([model_name, model.__class__.__name__, rocscore, prcscore])
             else:
                 y_score = model.predict(X)
                 accuracy =  accuracy_score(y, y_score)
                 fscore =f1_score(y, y_score)
-                if optimized:
-                    print('%s accuracy-score: %.3f', (model.__class__.__name__, accuracy))
-                    print('%s f-score: %.3f', (model.__class__.__name__, fscore))
-                
-            
+                print('%s accuracy-score: %.3f', (model.__class__.__name__, accuracy))
+                print('%s f-score: %.3f', (model.__class__.__name__, fscore))
+                basemodelScores.append([model_name, model.__class__.__name__, accuracy, fscore])
+        return basemodelScores
 
     # make predictions with stacked model
     def super_learner_predictions(X, models, meta_model):
@@ -149,16 +156,20 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
     
     # fit if desired
     if full_fit:
+        # re-fit base models only if full_fit was specified
+        new_models = fit_base_models(X_train, y_train, new_models)
+    
+    if optimized:
+        # evaluate base models
+        basemodelScores = evaluate_models(X_test, y_test, new_models)
+    # evaluate meta model
+    
+    if full_fit:
         # get out of fold predictions
         meta_X, meta_y = get_out_of_fold_predictions(X_train, y_train, new_models)
-        # re-fit base models only if full_fit was specified
-        fit_base_models(X_train, y_train, new_models)
-        # re-fit meta model
+        # fit meta model
         mymeta_model = fit_meta_model(meta_X, meta_y)
-        
-    # evaluate base models
-    evaluate_models(X_test, y_test, new_models)
-    # evaluate meta model
+    
     preds = super_learner_predictions(X_test, new_models, mymeta_model)
     
     tested_on="{}".format(X_test.shape)
@@ -186,20 +197,22 @@ def superlearnerFitAndEval(X_train, X_test, y_train, y_test, mymodels, mymeta_mo
         works = False
     
     if works:
+        # AUROC
         fpr, tpr, ROCthresholds = roc_curve(y_test, y_score)
         roc_auc = auc(fpr, tpr)
         roc_auc = round(roc_auc, 3)
-
-        precision, recall, PRthresholds = precision_recall_curve(y_test, y_score)
-        prc_auc = auc(recall, precision)
+        # AUPRC
+        precision, recalls, PRthresholds = precision_recall_curve(y_test, y_score)
+        prc_auc = auc(recalls, precision)
     else:
+        # else, save that these scores aren't possible (only binary prediction)
         roc_auc, prc_auc = 'only binary prediction', 'only binary prediction'
         
     scores = [model_name, roc_auc, prc_auc, accuracy, fscore, betascore, recall]
     scoresDict = {'OC': roc_auc, 'OP':prc_auc, 'OA': accuracy, 'OF':fscore, 'OR':recall, 'OB':betascore}
     if optimized:
         # if this is the optimized SuperLearner, return the models to be pickled
-        return (scores, new_models, mymeta_model)
+        return (scores, new_models, mymeta_model, basemodelScores)
     else:
         m = model_name
         keys = [key for key in scoresDict]
@@ -282,3 +295,5 @@ def superlearnerPredict(df, mymodels, mymeta_model, predict_proba=False, decisio
     pred = super_learner_predictions(X_test, models, mymeta_model)
     
     return pred
+
+

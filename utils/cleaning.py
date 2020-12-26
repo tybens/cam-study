@@ -142,7 +142,51 @@ def clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED):
         df.to_csv('./models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL), index=False)
         df[0:1].to_csv('./models/{}/sample_cleaned_patient_{}.csv'.format(LABEL, LABEL), index=False)
     return df
-            
+
+def clean_to_match(df_processed, df_TOMATCH_processed, verbose=False):
+    """ manufactures df_TOMATCH_processed (already cleaned and one-hot-encoded data, but without correct features) 
+    data to match the df_processed sample provided (so df_TOMATCH_processed will have identical features to the 
+    specific data that the model was fit on, df_processed)
+    
+    Parameters
+    ----------
+    df_processed : pandas.DataFrame
+        data that is cleaned and that has identical features to the data the model was fit on
+    df_TOMATCH_processed : pandas.DataFrame
+        already cleaned and one-hot-encoded data, but without correct features
+    verbose : boolean, optional
+        Default is False. Whether or not to print the features that were deleted or manufactured.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        df_TOMATCH_processed but now with corrected features
+    """
+    df_test_processed = df_TOMATCH_processed.copy()
+    df_test_processed.is_copy = None
+    
+    processed_columns = list(df_processed.columns[:])
+    categoricals = ["age_group", "sex", "month", "year", "CC"]
+    cat_dummies = [i for i in processed_columns if any(ele in i for ele in categoricals) if i != 'CC_num']
+
+    removed_features = list()
+    for col in df_test_processed.columns:
+        if any(ele in col for ele in categoricals) and (col not in cat_dummies) and (col != 'CC_num'):
+            removed_features.append(col)
+            df_test_processed.drop(col, axis=1, inplace=True)
+    if verbose:
+        print("removed features: {}".format(removed_features))
+
+    for col in cat_dummies:
+        if col not in df_test_processed.columns:
+            if verbose:
+                print("Adding missing feature: {}".format(col))
+            df_test_processed[col] = 0
+
+    # reorder test processed df columns with df_processed
+    df_test_processed = df_test_processed[processed_columns]
+    return df_test_processed
+
 def str2bool(v):
     if isinstance(v, bool):
         return v

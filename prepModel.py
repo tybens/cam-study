@@ -13,11 +13,10 @@ from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # local imports
-from cleaning import str2bool
-from app.utils import calibrateMeta
-from app.utils import model_eval, clean_to_match, differences, superlearner_eval, superlearner_predict, percentileFromScore # evaluations
-from app.utils import predPercentageHist, precision_recallPlot, roc_Plot, plot_precision_recall_vs_threshold # personalized figures
-from app.utils.patient import Patient  # Patient class
+from cleaning import str2bool, clean_to_match
+from app.utils import calibrateMeta # TODO
+from app.utils import superlearnerPredict # evaluations
+from app.utils.patient import Patient  # TODO: Patient class
 
 
 def prep(VITALS, LABEL, OPTIMIZED=None, EXPANDING=False, DATA_MATCH=None, IDX=None, LOAD=False, BETA=3):  
@@ -47,6 +46,7 @@ def prep(VITALS, LABEL, OPTIMIZED=None, EXPANDING=False, DATA_MATCH=None, IDX=No
         mymodels = pickle.load(open(filename_models, 'rb'))
         mymeta_model = pickle.load(open(filename_meta, 'rb'))
     else:
+        # --- if called during EXPANDING, load in the prepped MasterModel list instead of separate models / meta model
         filename_master = './models/{}/expanded/MasterModel{}.sav'.format(LABEL, IDX)
         MasterModelList = pickle.load(open(filename_master, 'rb'))
         
@@ -82,7 +82,7 @@ def prep(VITALS, LABEL, OPTIMIZED=None, EXPANDING=False, DATA_MATCH=None, IDX=No
         data_matched = DATA_MATCH
 
     # --SAVING
-    all_scores = superlearner_predict(data_matched, MasterModelList[0], MasterModelList[1], predict_proba=True)[:, 1]
+    all_scores = superlearnerPredict(data_matched, MasterModelList[0], MasterModelList[1], predict_proba=True)[:, 1]
     filename_all = './production_data/{}/all_scores_{}.csv'.format(LABEL, IDX)
     all_scores.tofile(filename_all,sep=',',format='%10.5f')
 
