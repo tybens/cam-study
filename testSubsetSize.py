@@ -39,28 +39,23 @@ def main(LABEL, subsets):
     ALLSCORES = []
     # Load in the SL model (basemodels, metamodel)
     
-    filename_models = './models/{}/models_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
-    filename_meta = './models/{}/metamodel_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
-    filename_allData = 'data_vitals_cleaned.csv'
+    filename_superlearner = './models/{}/SuperLearner{}SL'.format(LABEL, OPTIMIZED)
+    filename_allData = './data/data_vitals_cleaned.csv'
     
-    baseModels = pickle.load(open(filename_models, 'rb'))
-    metaModel = pickle.load(open(filename_meta, 'rb'))
-    cleaned_large_data = pd.read_csv(open('./data/'+filename_allData, 'rb'))
+    superLearner = pickle.load(open(filename_superlearner, 'rb'))
+    cleaned_large_data = pd.read_csv(open(filename_allData, 'rb'))
     print("loaded models and cleaned_large_data")
     
-    for subsetLength in subsets:
-        print("performing on subset {}...".format(subsetLength))
-        df = clean(VITALS=True, NUM_UNIQUE_CCS=1000, SUBSET_SIZE=subsetLength, LABEL=LABEL, ALL_DATA=False, SAVE_CLEANED=False)
+    X = cleaned_large_data.drop('admit_binary', axis=1)
+    y = cleaned_large_data['admit_binary']
+    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2, shuffle=True, random_state=RAND_STATE) 
+    
+    for subsetProportion in subsets:
+        print("performing on subset {}...".format(subsetProportion))
         
-        df_all_matched = clean_to_match(df, cleaned_large_data)
-        
-        # really small test size bc we want it to be true to subsetLength
-        X = df.drop('admit_binary', axis=1)
-        y = df['admit_binary']
-        X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.001,random_state=0, shuffle=False) 
         
         scores, _, _, basemodelScores = superlearnerFitAndEval(X_train, X_test, y_train, y_test, 
-                                                        baseModels, metaModel, df_all_data=df_all_matched, model_name=str(subsetLength), 
+                                                        baseModels, metaModel, model_name=str(subsetProportion), 
                                                         full_fit=True, optimized=True)
         
         print(basemodelScores) # basemodels also scored on all data
@@ -68,19 +63,22 @@ def main(LABEL, subsets):
         # save all scors
         ALLSCORES.append(scores)
         
-    columns = ['Model', 'AUROC', 'AUPRC', 'accuracy', 'f1', 'fbeta', 'recall', 'subset size']
+    columns = ['Model', 'AUROC', 'AUPRC', 'accuracy', 'f1', 'fbeta', 'recall']
     pd.DataFrame(ALLSCORES, columns=columns).to_csv('./models/{}/testSubsetSize.csv'.format(LABEL), header=False, index=False, sep=',')
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--LABEL", "-l", type=str, help="str label from which modelSearch to load models from")
     parser.add_argument("--OPTIMIZED", "-o", type=str, help="str how the model was optimized 'OB' for fbeta, 'OF' for f-score, 'OP' for AUPRC, 'OC' for AUROC\nThis signifies which model will be loaded in")
+    parser.add_argument("--RAND_STATE", "-rs", type=int, help="Change the random_state through with np and sklearn work")
+
     args = parser.parse_args()
     print("ARGUMENTS PASSED: {}".format(args))
     
     LABEL = args.LABEL
     OPTIMIZED = args.OPTIMIZED
+    RAND_STATE = args.RAND_STATE
     
-    subsets = [10000, 20000, 50000, 70000, 100000, 200000]
+    subsets = [0.15, 0.25, 0.4, 0.5, 0.7, 0.9]
     
     main(LABEL, subsets)

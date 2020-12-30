@@ -12,18 +12,17 @@ import copy
 
 # related thirdparty imports
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, plot_confusion_matrix, accuracy_score, f1_score, fbeta_score, r2_score, recall_score, precision_score, roc_auc_score, average_precision_score
+from sklearn.metrics import make_scorer, confusion_matrix, accuracy_score, f1_score, recall_score, precision_score, roc_auc_score, average_precision_score
 from sklearn.utils import compute_class_weight
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.linear_model import LogisticRegression, SGDClassifier, RidgeClassifier, Perceptron, PassiveAggressiveClassifier
 from sklearn.calibration import CalibratedClassifierCV
-from mlens.ensemble import SuperLearner, Subsemble
 import optuna # hyperparam ~unsupervised tuning 
 from optuna.samplers import TPESampler
 optuna.logging.set_verbosity(optuna.logging.WARNING) # comment this output optuna progress
@@ -32,7 +31,7 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # local relative imports:
 from utils.cleaning import clean, str2bool # clean for processing data, str2bool for command line operability
-from utils import superlearnerFitAndEval
+from utils.SuperLearner import SuperLearner # I made a superlearner model framework!
 
 class Optimizer:
     """ Optimization suite as adapted from optuna's framework
@@ -44,32 +43,11 @@ class Optimizer:
         
     def objective(self, trial):
         model = create_model(trial)
-        model.fit(X_train, y_train)
-        
-        if self.metric == 'OA':
-            preds = model.predict(X_test)
-            return accuracy_score(y_test, preds)
-        elif self.metric == 'OR':
-            preds = model.predict(X_test)
-            return recall_score(y_test, preds)
-        elif self.metric == 'OF':
-            preds = model.predict(X_test)
-            return f1_score(y_test, preds)
-        elif self.metric == 'OB':
-            preds = model.predict(X_test)
-            return fbeta_score(y_test, preds, beta=BETA)
-        elif self.metric == 'OP':
-            if hasattr(model, 'decision_function'):
-                y_score = model.decision_function(X_test)
-            elif hasattr(model, 'predict_proba'):
-                y_score = model.predict_proba(X_test)[:, 1]
-            return average_precision_score(y_test, y_score)
-        elif self.metric == 'OC':
-            if hasattr(model, 'decision_function'):
-                y_score = model.decision_function(X_test)
-            elif hasattr(model, 'predict_proba'):
-                y_score = model.predict_proba(X_test)[:, 1]
-            return roc_auc_score(y_test, y_score)
+        scorer_dict = {'OA': 'accuracy',
+                      'OP': 'average_precision',
+                      'OF': 'f1',
+                      'OR': 'roc_auc'}
+        return np.mean(cross_val_score(model, X_train, y_train, scoring=scorer_dict[self.metric], cv=5))
                 
             
             
@@ -78,23 +56,8 @@ class Optimizer:
         study.optimize(self.objective, n_trials=self.trials)
         return study.best_params
     
-def confMat():
-    """ Verbose printing of a confusion matrix of each optimized base model
-    """
-    print(confusion_matrix(y_test, preds))
-    
-
-def evalModel(m):
-    """ Verbose printing of threshold scores, mainly for tracking progress of script
-    
-    """
-    print(m + ' accuracy: ', accuracy_score(y_test, preds))
-    print(m + ' f1-score: ', f1_score(y_test, preds))
-    print(m + ' fbeta-score: ', fbeta_score(y_test, preds, beta=BETA))
-    print(m + ' recall: ', recall_score(y_test, preds))
-    
-def getScores(model):
-    """ Function for scoring the provided model
+def getScores(model, X_test, y_test):
+    """ Function for scoring the provided model on validation set
     
     Arguments
     ---------
@@ -107,6 +70,8 @@ def getScores(model):
         a list of scores for the optimized model passed as an argument    
     """
     AUROC, AUPRC = None, None
+    
+    preds = model.predict(X_test)
     
     if hasattr(model, 'decision_function'):
         y_score = model.decision_function(X_test)
@@ -121,11 +86,10 @@ def getScores(model):
         AUPRC = average_precision_score(y_test, y_score)
     acc = accuracy_score(y_test, preds)
     f1 = f1_score(y_test, preds)
-    fb = fbeta_score(y_test, preds, beta=BETA)
     rec = recall_score(y_test, preds)
     
-    # scores = [label of model, AUROC, AUPRC, accuracy, f1_score, fbeta score, recall]
-    scores = [m, AUROC, AUPRC, acc, f1, fb, rec]
+    # scores = [label of model, AUROC, AUPRC, accuracy, f1_score, recall]
+    scores = [m, AUROC, AUPRC, acc, f1, rec]
     return scores
     
 def optimizeAndSaveScores(model, m):
@@ -149,19 +113,17 @@ def optimizeAndSaveScores(model, m):
     
     """
     global preds
-    
+    print('-'*40)
+    print(m)
     optimizer = Optimizer(m[:2])
     model_params = optimizer.optimize()
     if m[-3:] != 'KNN':
         model_params['random_state'] = RAND_STATE
+    # after optimized, fit on all train data and test on validation set (X_test, y_test)
     optimizedModel = model(**model_params)
     optimizedModel.fit(X_train, y_train)
-    preds = optimizedModel.predict(X_test)
     print('Optimized on ' + m[:2])
-    evalModel(m)
-    confMat()
-    
-    retscore = getScores(optimizedModel)
+    retscore = getScores(optimizedModel, X_test, y_test)
     return {m: model(**model_params)}, retscore
     
 def baselineThenOptimize(model, label):
@@ -192,10 +154,8 @@ def baselineThenOptimize(model, label):
         else:
             baselineModel = model()
         baselineModel.fit(X_train, y_train)
-        preds = baselineModel.predict(X_test)
-        evalModel(m)
-        confMat()
-        retscores.append(getScores(baselineModel))
+        
+        retscores.append(getScores(baselineModel, X_test, y_test))
         
     for metric in metrics:
         m = metric+label
@@ -204,8 +164,6 @@ def baselineThenOptimize(model, label):
             retdict.update(paramdict)
             retscores.append(retscore)
  
-        
-    print('---------------------------------------------------')
     return retscores, retdict
 
     
@@ -254,13 +212,16 @@ def LGBM(out_queue, score_queue):
     label = 'LGBM'
 
     def create_model(trial):
-        max_depth = trial.suggest_int("max_depth", 2, 30)
-        n_estimators = trial.suggest_int("n_estimators", 1, 500)
-        learning_rate = trial.suggest_uniform('learning_rate', 0.0000001, 1)
-        num_leaves = trial.suggest_int("num_leaves", 2, 5000)
-        min_child_samples = trial.suggest_int('min_child_samples', 3, 200)
-        model = LGBMClassifier(learning_rate=learning_rate, n_estimators=n_estimators, max_depth=max_depth, num_leaves=num_leaves, min_child_samples=min_child_samples,
-                               random_state=RAND_STATE, is_unbalance=False)
+        num_leaves = trial.suggest_int('num_leaves', 2, 5000) 
+        max_depth = trial.suggest_int('max_depth', 2, 100) 
+        n_estimators = trial.suggest_int('n_estimators', 10, 500) 
+        subsample_for_bin = trial.suggest_int('subsample_for_bin', 2000, 300_000) 
+        min_child_samples = trial.suggest_int('min_child_samples', 20, 500) 
+        reg_alpha = trial.suggest_uniform('reg_alpha', 0.0, 1.0) 
+        colsample_bytree = trial.suggest_uniform('colsample_bytree', 0.6, 1.0) 
+        learning_rate = trial.suggest_loguniform('learning_rate', 1e-5, 1e-0)   
+        model = LGBMClassifier(learning_rate=learning_rate, colsample_bytree=colsample_bytree, reg_alpha=reg_alpha, subsample_for_bin=subsample_for_bin, num_leaves=num_leaves, max_depth=max_depth, n_estimators=n_estimators, min_child_samples=min_child_samples, random_state=RAND_STATE, is_unbalance=True)
+        
         return model
     
     retscores, retdict = baselineThenOptimize(model, label)
@@ -275,10 +236,7 @@ def LR(out_queue, score_queue):
         lr = LogisticRegression(random_state=RAND_STATE)
         lr.fit(X_train, y_train)
         preds = lr.predict(X_test)
-        evalModel(m, preds)
-        confMat()
         
-    print('---------------------------------------------------')
 
 
 def DT(out_queue, score_queue):
@@ -364,7 +322,7 @@ def ET(out_queue, score_queue):
     out_queue.put(retdict)
 
 
-def SL_fit_and_save(mode, result, head):
+def SL_fit_and_save(superLearner):
     """ Function for final testing and saving of optimized super learner ensemble
     
     The final scores of the optimized model ensemble are obtained, the models are pickled as a python 
@@ -372,35 +330,34 @@ def SL_fit_and_save(mode, result, head):
     
     Arguments
     ---------
-    mode: str
-        A string label for the model type: {'OPSL', 'OASL', 'OBSL', 'OCSL', 'ORSL'}.
-    result: list(str)
-        A list of baselearners represented by their name, to be found in mdict[baselearner]
-    head: str
-        A string model name to be used as the meta learner in the super learner ensemble
+    superLearner : object
+        a SuperLearner object as defined in utils.SuperLearner
         
     Returns
     -------
     list({str, float})
-        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, accuracy, f1_score, fbeta score, recall]
+        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, accuracy, f1_score, recall]
     
     """
-    baseModels = list()
-    for item in result:
-        baseModels.append(mdict[item])
+    mode = superLearner.model_name
+    # fit the optimized hyperparameter superlearner on the training set
+    superLearner.fit(X_train, y_train)
+    # score it based on validation set (also basemodels)
+    scores = superLearner.scores(X_test, y_test)
+    basemodelScores = superLearner.basemodelScores(X_test, y_test)
     
-    metaModel = copy.deepcopy(mdict[head])
-    
-    scores, models, meta_model, basemodelScores = superlearnerFitAndEval(X_train, X_test, y_train, y_test, 
-                                                        baseModels, metaModel, model_name=mode, 
-                                                        full_fit=True, optimized=True)
+    models, meta_model = superLearner.baseModels, superLearner.metaModel
+    # save the SuperLearner object
+    filename = './models/{}/SuperLearner{}.sav'.formt(LABEL, mode)
+    pickle.dump(superLearner, open(filename, 'wb'))
+    # also save the independent models bc that's how I used to do it
     filename = './models/{}/models_{}_{}.sav'.format(LABEL, mode, LABEL)
     pickle.dump(models, open(filename, 'wb'))
     filename = './models/{}/metamodel_{}_{}.sav'.format(LABEL, mode, LABEL)
     pickle.dump(meta_model, open(filename, 'wb'))
-    scores.extend(basemodelScores) # extend because basemodelScores is 2 dimensional
+    basemodelScores.append(scores) # append because scores is 1-D
 
-    return scores
+    return basemodelScores
     
 def SL():
     """Function for optimization of super learner ensembles
@@ -413,7 +370,7 @@ def SL():
     -------
     list(list({str, float}))
         A two dimensional list of the scores for each super learner ensemble. 
-        Each row has this structure: [label of model, AUROC, AUPRC, accuracy, f1_score, fbeta score, recall]
+        Each row has this structure: [label of model, AUROC, AUPRC, accuracy, f1_score, recall]
     
     """
     scores = []
@@ -422,40 +379,46 @@ def SL():
 
     def create_model(trial):
         model_names = list()
-        optimized_models = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET']
+        optimized_models = ['OARF', 'OFRF', 'OPRF', 'ORRF', 'OAXGB', 'OFXGB', 'OPXGB', 'ORXGB', 'OALGBM', 'OFLGBM', 'OPLGBM', 'ORLGBM', 'OADT', 'OFDT', 'OPDT', 'ORDT', 'OAKNN', 'OFKNN', 'OPKNN', 'ORKNN', 'OAABC', 'OFABC', 'OPABC', 'ORABC', 'OAET', 'OFET', 'OPET', 'ORET']
         models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
 
         head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
-        n_models = trial.suggest_int("n_models", 2, 5)
+        n_models = trial.suggest_int("n_models", 2, 10)
         for i in range(n_models):
             model_item = trial.suggest_categorical('model_{}'.format(i), models_list)
             if model_item not in model_names:
                 model_names.append(model_item)
 
-        folds = trial.suggest_int("folds", 2, 6)
+        folds = trial.suggest_int("folds", 2, 8)
 
         models = list()
         for item in model_names:
             models.append(mdict[item])
         head = trial.suggest_categorical('head', head_list)
-        head = copy.deepcopy(mdict)[head]
-        return models, head
+        metaModel = copy.deepcopy(mdict)[head]
+        
+        superLearner = SuperLearner(models, metaModel)
+        
+        return superLearner
     
     for metric in metrics:
         m = metric+label
         
         if m in TOTEST:
             def objective(trial):
-                models, head = create_model(trial)
-                score = superlearnerFitAndEval(X_train, X_test, y_train, y_test, 
-                                                models, head, model_name=m, 
-                                                full_fit=True, optimized=False)
-                # score is correct metric based on m passed, 
-                # in this case 'OF' tells superlearnerFitAndEval to return fscore
+                superLearner = create_model(trial)
+                scorer_dict = {'OA': 'accuracy',
+                      'OP': 'average_precision',
+                      'OF': 'f1',
+                      'OR': 'roc_auc'}
+                score = np.mean(cross_val_score(superLearner, X_train, y_train, scoring=scorer_dict[metric]))
+                
                 return score
+            # initialize study
             study = optuna.create_study(direction="maximize", sampler=sampler)
+            # optimize, using defined objective with specified metric for scoring
             study.optimize(objective, n_trials=150)
-
+        
             params = study.best_params
 
             head = params['head']
@@ -465,8 +428,17 @@ def SL():
             for key, value in params.items():
                 if value not in result:
                     result.append(value)
-
-            scores.extend(SL_fit_and_save(m, result, head)) # extend because SL_fit_and_save returns 2-d array
+                    
+            # make SuperLearner object from result of optimization
+            baseModels = list()
+            for item in result:
+                baseModels.append(mdict[item])
+                
+            metaModel = copy.deepcopy(mdict[head])
+            superLearner = SuperLearner(baseModels, metaModel, model_name=m)
+            
+            # fit the optimized SuperLearner and save it
+            scores.extend(SL_fit_and_save(superLearner)) # extend because SL_fit_and_save returns 2-d array
             
     return scores
     
@@ -477,7 +449,6 @@ if __name__ == '__main__':
     parser.add_argument("--NUM_UNIQUE_CCS", "-nccs", type=int, help="Number of unique CCs to be had when cleaning the data, only relevant if clean is true")
     parser.add_argument("--SUBSET_SIZE", "-ss", type=int, help="How much of the 220,000 patients do you want to work with?")
     parser.add_argument("--RAND_STATE", "-rs", type=int, help="Change the random_state through with np and sklearn work")
-    parser.add_argument("--BETA", "-b", type=float, help="fbeta_score, beta > 1 favors recall < 1 favors precision")
     parser.add_argument("--VITALS", "-v", type=str2bool, nargs='?', const=True, default=False, help="boolean for whether to work with vitals or not")
     parser.add_argument("--SAVE_CLEANED", "-sav", type=str2bool, nargs='?', const=True, default=False, help="boolean for whether to save the cleaned file, only relevant if clean is true")
     parser.add_argument("--LABEL", "-l", type=str, help="str what to label the saved file with, only relevant if clean is true")
@@ -489,26 +460,31 @@ if __name__ == '__main__':
     NUM_UNIQUE_CCS = args.NUM_UNIQUE_CCS
     SUBSET_SIZE = args.SUBSET_SIZE
     RAND_STATE = args.RAND_STATE
-    BETA = args.BETA
     VITALS = args.VITALS
     SAVE_CLEANED = args.SAVE_CLEANED
     LABEL = args.LABEL
     ALL_DATA = args.ALL_DATA
     
-#     TOTEST = ['OAXGB', 'OBXGB', 'OALGBM', 'OBLGBM', 'OPXGB', 'OPLGBM','OPRF','OPABC', 'OPKNN', 'OPET', 'OPDT','OPSL', 'OBSL']
-#     TOTEST = ['OARF', 'OFRF', 'ORRF', 'OBRF', 'OPRF', 'OCRF', 'OAXGB', 'OFXGB', 'ORXGB', 'OBXGB', 'OPXGB', 'OCXGB', 'OALGBM', 'OFLGBM', 'ORLGBM', 'OBLGBM', 'OPLGBM', 'OCLGBM', 'OADT', 'OFDT', 'ORDT', 'OBDT', 'OPDT', 'OCDT', 'OAKNN', 'OFKNN', 'ORKNN', 'OBKNN', 'OPKNN', 'OCKNN', 'OAABC', 'OFABC', 'ORABC', 'OBABC', 'OPABC', 'OCABC', 'OAET', 'OFET', 'ORET', 'OBET', 'OPET', 'OCET', 'OPSL', 'OBSL', 'OCSL', 'OASL'] # ALL THE MODELS MWAHAHAHA (INCLUDING SL!!!) (ExCLUDING BC!) 'OABC', 'OFBC', 'ORBC', 'OBBC', 'OPBC', 'OCBC',
-    TOTEST = ['OPSL', 'OBSL', 'OCSL', 'OASL'] # Debugging SL
-
+    
     if CLEAN:
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
     else:
-        filename = './models/{}/data_cleaned_{}.csv'.format(LABEL, LABEL)
-        df = pd.read_csv(filename)
+        filename = './data/data_cleaned.csv' if not VITALS else './data/data_vitals_cleaned.csv'
+        df1 = pd.read_csv(filename)
+        df = df1.sample(n=SUBSET_SIZE, )
+    
+    #Defining the independent variables and dependent variables
+    X = df.drop('admit_binary', axis=1)
+    y = df['admit_binary']
+    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2,random_state=RAND_STATE, shuffle=True)
+    if not ALL_DATA:
+        X_train = X_train[:SUBSET_SIZE]
+        y_train = y_train[:SUBSET_SIZE]
+    
+    print(X_train.shape, X_test.shape)
 
     print("# OF FEATURES: {}  |  # OF PATIENTS: {}".format(len(df.columns)-1, len(df)))
-    print("RAND_STATE: {}    |  BETA:   {}".format(RAND_STATE, BETA))
-
-    print("TOTEST: {}".format(TOTEST))
+    print("RAND_STATE: {}   ".format(RAND_STATE))
 
     weight_list = compute_class_weight('balanced', classes=[0, 1],y=df['admit_binary'])
     weight_dict = {i:weight for i, weight in enumerate(weight_list)}
@@ -532,18 +508,16 @@ if __name__ == '__main__':
         'PAC': PassiveAggressiveClassifier(random_state=RAND_STATE)
     }
 
-    #Defining the independent variables and dependent variables
-    X = df.drop('admit_binary', axis=1)
-    y = df['admit_binary']
-
-    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2,random_state=RAND_STATE, shuffle=False)
-    print(X_train.shape, X_test.shape)
+   
     # MULTIPROCESSING:
     num_cores = 7 #int(os.getenv('SLURM_CPUS_PER_TASK')) # can't be 8, so making it 7
     
     jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC (and LR)
     
-    metrics = ['OA', 'OF', 'OB', 'OR', 'OP', 'OC']
+    metrics = ['OP', 'OR'] # possible metrics: 'OA', 'OF', 'OP', 'OR'
+    models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET', 'SL']
+    TOTEST = [metric+model for metric in metrics for model in models]
+    print("TOTEST: {}".format(TOTEST))
     
     out_queue = mp.Queue()
     score_queue = mp.Queue()
