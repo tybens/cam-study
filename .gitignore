@@ -11,6 +11,7 @@ __pycache__/
 
 # Personal files
 scores_for_table-study10k.csv
+logRegTest.py
 
 # Files too large for github
 models/

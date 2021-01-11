@@ -52,7 +52,7 @@ def prep(VITALS, LABEL, RAND_STATE OPTIMIZED=None):
     # fit the optimized model to the large cleaned data
     X = cleaned_large_data.drop('admit_binary', axis=1)
     y = cleaned_large_data['admit_binary']
-    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=False, random_state=RAND_STATE)
+    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=True, random_state=RAND_STATE)
 
     # fit and score on large dataset
     superLearner.fit(X_train, y_train)

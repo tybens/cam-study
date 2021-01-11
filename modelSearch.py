@@ -28,10 +28,10 @@ from optuna.samplers import TPESampler
 optuna.logging.set_verbosity(optuna.logging.WARNING) # comment this output optuna progress
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
+from mlens.ensemble import SuperLearner
 
 # local relative imports:
 from utils.cleaning import clean, str2bool # clean for processing data, str2bool for command line operability
-from utils.SuperLearner import SuperLearner # I made a superlearner model framework!
 
 class Optimizer:
     """ Optimization suite as adapted from optuna's framework
@@ -47,16 +47,16 @@ class Optimizer:
                       'OP': 'average_precision',
                       'OF': 'f1',
                       'OR': 'roc_auc'}
-        return np.mean(cross_val_score(model, X_train, y_train, scoring=scorer_dict[self.metric], cv=5))
+        return np.mean(cross_val_score(model, X_train, y_train, scoring=scorer_dict[self.metric], cv=3))
                 
             
             
     def optimize(self):
         study = optuna.create_study(direction="maximize", sampler=self.sampler)
         study.optimize(self.objective, n_trials=self.trials)
-        return study.best_params
+        return study.best_params, study.best_value
     
-def getScores(model, X_test, y_test):
+def getScores(model, X_test, y_test, crossvalscore):
     """ Function for scoring the provided model on validation set
     
     Arguments
@@ -88,8 +88,8 @@ def getScores(model, X_test, y_test):
     f1 = f1_score(y_test, preds)
     rec = recall_score(y_test, preds)
     
-    # scores = [label of model, AUROC, AUPRC, accuracy, f1_score, recall]
-    scores = [m, AUROC, AUPRC, acc, f1, rec]
+    # scores = [label of model, AUROC, AUPRC, accuracy, f1_score, recall, crossvalscore]
+    scores = [m, AUROC, AUPRC, acc, f1, rec, crossvalscore]
     return scores
     
 def optimizeAndSaveScores(model, m):
@@ -116,14 +116,14 @@ def optimizeAndSaveScores(model, m):
     print('-'*40)
     print(m)
     optimizer = Optimizer(m[:2])
-    model_params = optimizer.optimize()
+    model_params, crossvalscore = optimizer.optimize()
     if m[-3:] != 'KNN':
         model_params['random_state'] = RAND_STATE
     # after optimized, fit on all train data and test on validation set (X_test, y_test)
     optimizedModel = model(**model_params)
+    print(m + " best params: " + str(optimizedModel))
     optimizedModel.fit(X_train, y_train)
-    print('Optimized on ' + m[:2])
-    retscore = getScores(optimizedModel, X_test, y_test)
+    retscore = getScores(optimizedModel, X_test, y_test, crossvalscore)
     return {m: model(**model_params)}, retscore
     
 def baselineThenOptimize(model, label):
@@ -155,7 +155,7 @@ def baselineThenOptimize(model, label):
             baselineModel = model()
         baselineModel.fit(X_train, y_train)
         
-        retscores.append(getScores(baselineModel, X_test, y_test))
+        retscores.append(getScores(baselineModel, X_test, y_test, crossvalscore=0))
         
     for metric in metrics:
         m = metric+label
@@ -173,8 +173,8 @@ def RF(out_queue, score_queue):
     label = 'RF'
    
     def create_model(trial):
-        max_depth = trial.suggest_int("max_depth", 2, 32)
-        n_estimators = trial.suggest_int("n_estimators", 2, 500)
+        max_depth = trial.suggest_int("max_depth", 30, 40)
+        n_estimators = trial.suggest_int("n_estimators", 550, 650)
         min_samples_leaf = trial.suggest_int("min_samples_leaf", 1, 10)
         weights = weight_dict
         model = RandomForestClassifier(min_samples_leaf=min_samples_leaf, n_estimators=n_estimators, max_depth=max_depth, random_state=RAND_STATE, class_weight=weights)
@@ -322,42 +322,40 @@ def ET(out_queue, score_queue):
     out_queue.put(retdict)
 
 
-def SL_fit_and_save(superLearner):
+def SL_fit_and_save(superLearner, crossvalscore, model_name):
     """ Function for final testing and saving of optimized super learner ensemble
     
-    The final scores of the optimized model ensemble are obtained, the models are pickled as a python 
-    list of baselearners and a metamodel in the models/{LABEL} directory. 
+    The final scores of the optimized model ensemble are obtained, the superlearner is pickled 
+    as a mlens SuperLearner object in the models/{LABEL} directory. 
     
     Arguments
     ---------
     superLearner : object
-        a SuperLearner object as defined in utils.SuperLearner
+        a SuperLearner mlens object
         
     Returns
     -------
     list({str, float})
-        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, accuracy, f1_score, recall]
+        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, crossvalscore]
     
     """
-    mode = superLearner.model_name
+    
     # fit the optimized hyperparameter superlearner on the training set
     superLearner.fit(X_train, y_train)
-    # score it based on validation set (also basemodels)
-    scores = superLearner.scores(X_test, y_test)
-    basemodelScores = superLearner.basemodelScores(X_test, y_test)
+    # score it based on validation set
+    preds = superLearner.predict(X_test)[:, 1]
+    roc_score = roc_auc_score(y_test, preds)
+    prc_score = average_precision_score(y_test, preds)
     
-    models, meta_model = superLearner.baseModels, superLearner.metaModel
+    scores = [model_name, roc_score, prc_score, crossvalscore]
+    scores.append(crossvalscore)
+    
     # save the SuperLearner object
-    filename = './models/{}/SuperLearner{}.sav'.formt(LABEL, mode)
+    filename = './models/{}/SuperLearner{}.sav'.format(LABEL, mode)
     pickle.dump(superLearner, open(filename, 'wb'))
-    # also save the independent models bc that's how I used to do it
-    filename = './models/{}/models_{}_{}.sav'.format(LABEL, mode, LABEL)
-    pickle.dump(models, open(filename, 'wb'))
-    filename = './models/{}/metamodel_{}_{}.sav'.format(LABEL, mode, LABEL)
-    pickle.dump(meta_model, open(filename, 'wb'))
-    basemodelScores.append(scores) # append because scores is 1-D
-
-    return basemodelScores
+    
+    
+    return scores
     
 def SL():
     """Function for optimization of super learner ensembles
@@ -397,7 +395,9 @@ def SL():
         head = trial.suggest_categorical('head', head_list)
         metaModel = copy.deepcopy(mdict)[head]
         
-        superLearner = SuperLearner(models, metaModel)
+        superLearner = SuperLearner()
+        superLearner.add(models)
+        superLearner.add_meta(metaModel, proba=True)
         
         return superLearner
     
@@ -411,13 +411,13 @@ def SL():
                       'OP': 'average_precision',
                       'OF': 'f1',
                       'OR': 'roc_auc'}
-                score = np.mean(cross_val_score(superLearner, X_train, y_train, scoring=scorer_dict[metric]))
+                score = np.mean(cross_val_score(superLearner, X_train, y_train, scoring=scorer_dict[metric], cv=3, n_jobs=-1))
                 
                 return score
             # initialize study
             study = optuna.create_study(direction="maximize", sampler=sampler)
             # optimize, using defined objective with specified metric for scoring
-            study.optimize(objective, n_trials=150)
+            study.optimize(objective, n_trials=50)
         
             params = study.best_params
 
@@ -435,10 +435,15 @@ def SL():
                 baseModels.append(mdict[item])
                 
             metaModel = copy.deepcopy(mdict[head])
-            superLearner = SuperLearner(baseModels, metaModel, model_name=m)
+            superLearner = SuperLearner()
+            superLearner.add(baseModels)
+            superLearner.add_meta(metaModel, proba=True)
+            
+            # crossvalidation best score:
+            crossvalscore = study.best_value
             
             # fit the optimized SuperLearner and save it
-            scores.extend(SL_fit_and_save(superLearner)) # extend because SL_fit_and_save returns 2-d array
+            scores.extend(SL_fit_and_save(superLearner, crossvalscore, m)) # extend because SL_fit_and_save returns 2-d array
             
     return scores
     
@@ -470,8 +475,7 @@ if __name__ == '__main__':
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
     else:
         filename = './data/data_cleaned.csv' if not VITALS else './data/data_vitals_cleaned.csv'
-        df1 = pd.read_csv(filename)
-        df = df1.sample(n=SUBSET_SIZE, )
+        df = pd.read_csv(filename)
     
     #Defining the independent variables and dependent variables
     X = df.drop('admit_binary', axis=1)
@@ -481,7 +485,8 @@ if __name__ == '__main__':
         X_train = X_train[:SUBSET_SIZE]
         y_train = y_train[:SUBSET_SIZE]
     
-    print(X_train.shape, X_test.shape)
+    print("X_train.shape: ", X_train.shape, " X_test.shape: ",  X_test.shape)
+    print("y_train.shape: ", y_train.shape, " y_test.shape: ", y_test.shape)
 
     print("# OF FEATURES: {}  |  # OF PATIENTS: {}".format(len(df.columns)-1, len(df)))
     print("RAND_STATE: {}   ".format(RAND_STATE))
@@ -515,7 +520,8 @@ if __name__ == '__main__':
     jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC (and LR)
     
     metrics = ['OP', 'OR'] # possible metrics: 'OA', 'OF', 'OP', 'OR'
-    models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET', 'SL']
+    models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET']
+#     models = ['SL']
     TOTEST = [metric+model for metric in metrics for model in models]
     print("TOTEST: {}".format(TOTEST))
     
@@ -541,3 +547,6 @@ if __name__ == '__main__':
     
     # TODO: save scores_indep
     pd.DataFrame(scores_indep).to_csv('./models/{}/ALLSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
+    
+    print("COMPLETED!")
+    print("|"*40)

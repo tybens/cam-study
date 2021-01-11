@@ -21,7 +21,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 # evals
 from sklearn.metrics import roc_curve, auc, roc_auc_score, precision_recall_curve
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, average_precision_score, precision_recall_curve
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, average_precision_score, precision_recall_curve, recall_score
 from sklearn.metrics import confusion_matrix
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 
@@ -77,14 +77,14 @@ class SuperLearner:
         
     def get_params(self, deep=False):
         # return parameters
-        return { 'baseModels': self.baseModels, 'metaModel': self.metaModel, 'is_fit': self.is_fit}
+        return { 'baseModels': self.baseModels, 'metaModel': self.metaModel, 'model_name':self.model_name,'is_fit': self.is_fit}
     
     def scores(self, X_test, y_test):
         
         preds = self._super_learner_predictions(X_test)
     
         accuracy =  accuracy_score(y_test, preds)
-        fscore =f1_score(y_test, preds)
+        fscore = f1_score(y_test, preds)
         recall = recall_score(y_test, preds)
         
         # non threshold scores:
@@ -104,7 +104,6 @@ class SuperLearner:
             # AUROC
             fpr, tpr, ROCthresholds = roc_curve(y_test, y_score)
             roc_auc = auc(fpr, tpr)
-            roc_auc = round(roc_auc, 3)
             # AUPRC
             precision, recalls, PRthresholds = precision_recall_curve(y_test, y_score)
             prc_auc = auc(recalls, precision)
@@ -195,13 +194,19 @@ class SuperLearner:
         if predict_proba:
             if hasattr(metaModel, 'predict_proba'):
                 return metaModel.predict_proba(meta_X)
+            elif hasattr(metaModel, 'decision_function'):
+                #print("can't predict proba with {}, returning decision function".format(metaModel))
+                return metaModel.decision_function(meta_X)
             else:
-                print("can't predict_proba with this meta model, returning binary prediction")
+                print("can't predict_proba or decision function with {}, happened in {}, returning binary prediction".format(self.metaModel, self.model_name))
         elif decision_function:
             if hasattr(metaModel, 'decision_function'):
                 return metaModel.decision_function(meta_X)
+            elif hasattr(metaModel, 'predict_proba'):
+                #print("can't decision function with {}, returning predict proba".format(metaModel))
+                return metaModel.predict_proba(meta_X)[:, 1]
             else:
-                print("can't decision_function with this meta model, returning binary prediction")      
+                print("can't decision_function or predict proba with {}, happened in {}, returning binary prediction".format(self.metaModel, self.model_name))      
         
         return metaModel.predict(meta_X)
     
