@@ -8,10 +8,58 @@ import argparse  # python command line flags
 from itertools import combinations
 from sklearn.model_selection import train_test_split
 
-from prepModel import prep
 from utils.cleaning import str2bool
 from utils.SuperLearner import SuperLearner
 
+
+def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=None):  
+    """ Prepping the model to be ready to be used by productionApp
+    
+    Parameters
+    ----------
+    VITALS : bool
+        boolean for whether vitals are being worked with or not
+    LABEL : str
+        str what to label the saved file with and how to identify models to prep.
+    RAND_STATE : int
+        random state for trian_test_split, must be the same as modelSearch was done
+    OPTIMIZED : bool, optional
+        Default is None. The score metric ('OB', 'OF', 'OP') on which the model was optimized. 
+    """
+    
+    try:
+        filename_models = './models/{}/models_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
+        filename_meta = './models/{}/metamodel_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
+        mymodels = pickle.load(open(filename_models, 'rb'))
+        mymeta_model = pickle.load(open(filename_meta, 'rb'))
+    except:
+        filename_superlearner = './models/{}/SuperLearner{}SL.sav'.format(LABEL, OPTIMIZED)
+        superLearner = pickle.load(open(filename_meta, 'rb'))
+    
+    # fit and score on large dataset
+    superLearner.fit(X_train, y_train)
+    preds = superLearner.predict_proba(X_test)[:, 1]
+    roc_score = roc_auc_score(y_test, preds)
+    prc_score = average_precision_score(y_test, preds)
+
+    scores = ["SuperLearner fit on large train data", roc_score, prc_score]
+    print(scores)
+    
+    # save model as superlearner object
+    filename = './models/{}/MasterModel{}.sav'.format(LABEL, OPTIMIZED)
+    pickle.dump(superLearner, open(filename, 'wb'))
+
+    # --SAVING (this is for production of the figure!! not really the study)
+    all_scores = superLearner.predict_proba(X)[:, 1]
+    filename_all = './production_data/{}/all_scores_{}.csv'.format(LABEL, OPTIMIZED)
+    all_scores.tofile(filename_all,sep=',',format='%10.5f')
+    
+    # only need this once!
+    actual_scores = y
+    filename_actual = './production_data/{}/actual_scores_{}.csv'.format(LABEL, LABEL)
+    actual_scores.to_csv(filename_actual, index=False)
+    
+    
 def main():
     ALLSCORES = []
     
@@ -21,13 +69,6 @@ def main():
         os.makedirs(dest_dir)
     except OSError:
         pass # already exists
-    
-     # initial prep: calibrate the metamodel, clean and save all the data matched to the data the model was trained on, save as a list of models (MasterModelList)
-    prep(VITALS=VITALS, LABEL=LABEL, OPTIMIZED=OPTIMIZED, RAND_STATE=RAND_STATE)
-    # -- these files are created during the prep() call on line 26 --
-    # load optimized models that will be expanded (to encompass all combination of features) 
-    filename = './models/{}/MasterModel{}.sav'.format(LABEL, OPTIMIZED)
-    superLearner = pickle.load(open(filename, 'rb')) 
    
     # load ALL data that is cleaned to match the features of what the models were trained on 
     if VITALS:
@@ -35,7 +76,18 @@ def main():
     else:
         filename = 'data_cleaned.csv'
     data_matched = pd.read_csv('./data/'+filename)
-
+    X = data_matched.drop('admit_binary', axis=1)
+    y = data_matched['admit_binary']
+    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=True, random_state=RAND_STATE)
+    
+    # initial prep: clean and save all the data matched to the data the model was trained on, save as MasterModel
+    prep(X_train, X_test, y_trian, y_test, VITALS=VITALS, LABEL=LABEL, OPTIMIZED=OPTIMIZED, RAND_STATE=RAND_STATE)
+    
+    # -- these files are created during the prep() call on line 26 --
+    # load optimized models that will be expanded (to encompass all combination of features) 
+    filename = './models/{}/MasterModel{}.sav'.format(LABEL, OPTIMIZED)
+    superLearner = pickle.load(open(filename, 'rb')) 
+    
     # columns that might be NaNs
     relevant_cols = ['temp', 'HR', 'RR', 'O2', 'BP', 'ambulance', 'age'] if VITALS else  ['ambulance', 'age']
     # to craft an identifier dataframe:
@@ -58,16 +110,17 @@ def main():
                 cols.extend(['age_group_Adult', 'age_group_Geriatric_65-80',
        'age_group_Geriatric_80+', 'age_group_Pediatric'])
             # drop the columns that are NaNs
-            data_dropped = data_matched.drop(cols, 1)
+            X_train, X_test = X_train.drop(cols, 1), X_test.drop(cols, 1)
             name = ','.join(cols)
             
-            X = data_dropped.drop('admit_binary', axis=1)
-            y = data_dropped['admit_binary']
-            X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=True, random_state=RAND_STATE)
             
             # fit the data with dropped cols to new models
             superLearner.fit(X_train, y_train)
-            scores = superLearner.scores(X_test, y_test)
+            preds = superLearner.predict_proba(X_test)[:, 1]
+            roc_score = roc_auc_score(y_test, preds)
+            prc_score = average_precision_score(y_test, preds)
+
+            scores = [name, roc_score, prc_score]
 
             ALLSCORES.append(scores)
             # save the models
@@ -108,7 +161,7 @@ if __name__ == '__main__':
     ALLSCORES = main()
     
     # save all scores
-    columns = ['Model', 'AUROC', 'AUPRC', 'accuracy', 'f1', 'recall']
+    columns = ['Model', 'AUROC', 'AUPRC']
     pd.DataFrame(ALLSCORES, columns=columns).to_csv('./models/{}/ALLEXPANDEDSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
     
         

@@ -351,7 +351,7 @@ def SL_fit_and_save(superLearner, crossvalscore, model_name):
     scores.append(crossvalscore)
     
     # save the SuperLearner object
-    filename = './models/{}/SuperLearner{}.sav'.format(LABEL, mode)
+    filename = './models/{}/SuperLearner{}.sav'.format(LABEL, model_name)
     pickle.dump(superLearner, open(filename, 'wb'))
     
     
