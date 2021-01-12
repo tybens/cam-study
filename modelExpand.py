@@ -22,20 +22,13 @@ def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=
     LABEL : str
         str what to label the saved file with and how to identify models to prep.
     RAND_STATE : int
-        random state for trian_test_split, must be the same as modelSearch was done
+        random state for train_test_split, must be the same as modelSearch was done
     OPTIMIZED : bool, optional
         Default is None. The score metric ('OB', 'OF', 'OP') on which the model was optimized. 
     """
-    
-    try:
-        filename_models = './models/{}/models_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
-        filename_meta = './models/{}/metamodel_{}SL_{}.sav'.format(LABEL, OPTIMIZED, LABEL)
-        mymodels = pickle.load(open(filename_models, 'rb'))
-        mymeta_model = pickle.load(open(filename_meta, 'rb'))
-    except:
-        filename_superlearner = './models/{}/SuperLearner{}SL.sav'.format(LABEL, OPTIMIZED)
-        superLearner = pickle.load(open(filename_meta, 'rb'))
-    
+    filename_superlearner = './models/{}/SuperLearner{}SL.sav'.format(LABEL, OPTIMIZED)
+    superLearner = pickle.load(open(filename_meta, 'rb'))
+
     # fit and score on large dataset
     superLearner.fit(X_train, y_train)
     preds = superLearner.predict_proba(X_test)[:, 1]
@@ -46,12 +39,12 @@ def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=
     print(scores)
     
     # save model as superlearner object
-    filename = './models/{}/MasterModel{}.sav'.format(LABEL, OPTIMIZED)
+    filename = './models/{}/MasterModel.sav'.format(LABEL)
     pickle.dump(superLearner, open(filename, 'wb'))
 
     # --SAVING (this is for production of the figure!! not really the study)
     all_scores = superLearner.predict_proba(X)[:, 1]
-    filename_all = './production_data/{}/all_scores_{}.csv'.format(LABEL, OPTIMIZED)
+    filename_all = './production_data/{}/all_scores.csv'.format(LABEL)
     all_scores.tofile(filename_all,sep=',',format='%10.5f')
     
     # only need this once!
@@ -85,7 +78,7 @@ def main():
     
     # -- these files are created during the prep() call on line 26 --
     # load optimized models that will be expanded (to encompass all combination of features) 
-    filename = './models/{}/MasterModel{}.sav'.format(LABEL, OPTIMIZED)
+    filename = './models/{}/MasterModel.sav'.format(LABEL)
     superLearner = pickle.load(open(filename, 'rb')) 
     
     # columns that might be NaNs

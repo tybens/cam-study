@@ -90,6 +90,7 @@ def getScores(model, X_test, y_test, crossvalscore):
     
     # scores = [label of model, AUROC, AUPRC, accuracy, f1_score, recall, crossvalscore]
     scores = [m, AUROC, AUPRC, acc, f1, rec, crossvalscore]
+    print(scores)
     return scores
     
 def optimizeAndSaveScores(model, m):
@@ -121,7 +122,7 @@ def optimizeAndSaveScores(model, m):
         model_params['random_state'] = RAND_STATE
     # after optimized, fit on all train data and test on validation set (X_test, y_test)
     optimizedModel = model(**model_params)
-    print(m + " best params: " + str(optimizedModel))
+    print(f"'{m}'" + " : " + str(optimizedModel))
     optimizedModel.fit(X_train, y_train)
     retscore = getScores(optimizedModel, X_test, y_test, crossvalscore)
     return {m: model(**model_params)}, retscore
@@ -458,6 +459,7 @@ if __name__ == '__main__':
     parser.add_argument("--SAVE_CLEANED", "-sav", type=str2bool, nargs='?', const=True, default=False, help="boolean for whether to save the cleaned file, only relevant if clean is true")
     parser.add_argument("--LABEL", "-l", type=str, help="str what to label the saved file with, only relevant if clean is true")
     parser.add_argument("--ALL_DATA", "-ad", type=str2bool, nargs='?', const=True, default=False, help="clean all patients of specificied data, only relevant if clean is true")
+    parser.add_argument("--WARM_START", "-ws", type=str2bool, nargs='?', const=True, default=False, help="whether or not to skip the independent base model optimization and just optimize super learner")
     args = parser.parse_args()
     print("ARGUMENTS PASSED: {}".format(args))
     
@@ -469,7 +471,7 @@ if __name__ == '__main__':
     SAVE_CLEANED = args.SAVE_CLEANED
     LABEL = args.LABEL
     ALL_DATA = args.ALL_DATA
-    
+    WARM_START = args.WARM_START
     
     if CLEAN:
         df = clean(VITALS, NUM_UNIQUE_CCS, SUBSET_SIZE, LABEL, ALL_DATA, SAVE_CLEANED=True)
@@ -520,23 +522,47 @@ if __name__ == '__main__':
     jobs = [RF, XGB, LGBM, DT, KNN, ABC, ET] # took out BC (and LR)
     
     metrics = ['OP', 'OR'] # possible metrics: 'OA', 'OF', 'OP', 'OR'
-    models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET']
-#     models = ['SL']
-    TOTEST = [metric+model for metric in metrics for model in models]
-    print("TOTEST: {}".format(TOTEST))
     
-    out_queue = mp.Queue()
-    score_queue = mp.Queue()
-    workers = [ mp.Process(target=job, args=(out_queue, score_queue,) ) for job in jobs ]
-
-    [work.start() for work in workers]
-    [work.join() for work in workers]
-
     scores_indep = []
-    for j in range(len(workers)):
-        mdict.update(out_queue.get())
-        scores_indep.extend(score_queue.get())
     
+    if not warm_start:   
+        models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET']
+        TOTEST = [metric+model for metric in metrics for model in models]
+        print("TOTEST: {}".format(TOTEST))
+        out_queue = mp.Queue()
+        score_queue = mp.Queue()
+        workers = [ mp.Process(target=job, args=(out_queue, score_queue,) ) for job in jobs ]
+
+        [work.start() for work in workers]
+        [work.join() for work in workers]
+
+        for j in range(len(workers)):
+            mdict.update(out_queue.get())
+            scores_indep.extend(score_queue.get())
+    else:
+        models = ['SL']
+        TOTEST = [metric+model for metric in metrics for model in models]
+        print("TOTEST: {}".format(TOTEST))
+        
+        # this is the output of 50k patient optimization. 
+        warm_start_dict = {'OPABC': AdaBoostClassifier(learning_rate=0.3539350274698853, 
+                                                       n_estimators=437),
+                           'ORABC': AdaBoostClassifier(learning_rate=0.33959804182520703, 
+                                                       n_estimators=458),
+                           'ORKNN': KNeighborsClassifier(n_neighbors=25),
+                           'OPKNN': KneighborsClassifier(n_neighbors=25),
+                           'ORRF': RandomForestClassifier(max_depth=39, min_samples_leaf=2,
+                                                          n_estimators=608, random_state=24),
+                           'OPRF': RandomForestClassifier(max_depth=40, min_samples_leaf=2, 
+                                                          n_estimators=597, random_state=24), 
+                           'ORET': ExtraTreesClassifier(max_depth=20, n_estimators=299, 
+                                                        random_state=24), 
+                           'OPET':ExtraTreesClassifier(max_depth=20, n_estimators=299, 
+                                                       random_state=24), 
+                           'ORDT':DecisionTreeClassifier(max_depth=23, min_samples_leaf=2, min_weight_fraction_leaf=0.0036809118931240043, random_state=24), 
+                           'OPDT':DecisionTreeClassifier(max_depth=23, min_samples_leaf=2, min_weight_fraction_leaf=0.0036809118931240043, random_state=24)
+                          }
+        mdict.update(warm_start_dict)
         
     
     # SuperLearner ensembling:
