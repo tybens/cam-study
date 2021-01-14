@@ -379,25 +379,23 @@ def SL():
     def create_model(trial):
         model_names = list()
         optimized_models = ['OARF', 'OFRF', 'OPRF', 'ORRF', 'OAXGB', 'OFXGB', 'OPXGB', 'ORXGB', 'OALGBM', 'OFLGBM', 'OPLGBM', 'ORLGBM', 'OADT', 'OFDT', 'OPDT', 'ORDT', 'OAKNN', 'OFKNN', 'OPKNN', 'ORKNN', 'OAABC', 'OFABC', 'OPABC', 'ORABC', 'OAET', 'OFET', 'OPET', 'ORET']
-        models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
+        models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'ET', 'MLP', 'GB', ] # 'RDG', 'PCP', 'PAC',  'SGD'
 
-        head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'SGD', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC']
+        head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'ET', 'MLP', 'GB'] # , 'SGD' , 'RDG', 'PCP', 'PAC' (don't have predict_proba)
         n_models = trial.suggest_int("n_models", 2, 10)
         for i in range(n_models):
             model_item = trial.suggest_categorical('model_{}'.format(i), models_list)
             if model_item not in model_names:
                 model_names.append(model_item)
 
-        folds = trial.suggest_int("folds", 2, 8)
-
-        models = list()
+        superLearner = SuperLearner()
+        
+        # add base models as layers
         for item in model_names:
-            models.append(mdict[item])
+            superLearner.add(mdict[item])
+        # add meta model
         head = trial.suggest_categorical('head', head_list)
         metaModel = copy.deepcopy(mdict)[head]
-        
-        superLearner = SuperLearner()
-        superLearner.add(models)
         superLearner.add_meta(metaModel, proba=True)
         
         return superLearner
@@ -418,13 +416,12 @@ def SL():
             # initialize study
             study = optuna.create_study(direction="maximize", sampler=sampler)
             # optimize, using defined objective with specified metric for scoring
-            study.optimize(objective, n_trials=50)
+            study.optimize(objective, n_trials=150)
         
             params = study.best_params
 
             head = params['head']
-            folds = params['folds']
-            del params['head'], params['n_models'], params['folds']
+            del params['head'], params['n_models']
             result = list()
             for key, value in params.items():
                 if value not in result:
@@ -437,7 +434,7 @@ def SL():
                 
             metaModel = copy.deepcopy(mdict[head])
             superLearner = SuperLearner()
-            superLearner.add(baseModels)
+            superLearner.add(baseModels, proba=True)
             superLearner.add_meta(metaModel, proba=True)
             
             # crossvalidation best score:
@@ -449,6 +446,9 @@ def SL():
     return scores
     
 if __name__ == '__main__':     
+    
+    from sklearn.exceptions import ConvergenceWarning
+    warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--CLEAN", "-c", type=str2bool, nargs='?', const=True, default=False, help="Boolean for cleaning the data?")
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     
     scores_indep = []
     
-    if not warm_start:   
+    if not WARM_START:   
         models = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'ABC', 'ET']
         TOTEST = [metric+model for metric in metrics for model in models]
         print("TOTEST: {}".format(TOTEST))
@@ -550,7 +550,7 @@ if __name__ == '__main__':
                            'ORABC': AdaBoostClassifier(learning_rate=0.33959804182520703, 
                                                        n_estimators=458),
                            'ORKNN': KNeighborsClassifier(n_neighbors=25),
-                           'OPKNN': KneighborsClassifier(n_neighbors=25),
+                           'OPKNN': KNeighborsClassifier(n_neighbors=25),
                            'ORRF': RandomForestClassifier(max_depth=39, min_samples_leaf=2,
                                                           n_estimators=608, random_state=24),
                            'OPRF': RandomForestClassifier(max_depth=40, min_samples_leaf=2, 
@@ -560,7 +560,29 @@ if __name__ == '__main__':
                            'OPET':ExtraTreesClassifier(max_depth=20, n_estimators=299, 
                                                        random_state=24), 
                            'ORDT':DecisionTreeClassifier(max_depth=23, min_samples_leaf=2, min_weight_fraction_leaf=0.0036809118931240043, random_state=24), 
-                           'OPDT':DecisionTreeClassifier(max_depth=23, min_samples_leaf=2, min_weight_fraction_leaf=0.0036809118931240043, random_state=24)
+                           'OPDT':DecisionTreeClassifier(max_depth=23, min_samples_leaf=2, min_weight_fraction_leaf=0.0036809118931240043, random_state=24),
+                           'OPXGB':XGBClassifier(base_score=None, booster=None, colsample_bylevel=None,
+              colsample_bynode=None, colsample_bytree=None,
+              gamma=0.03387940504688189, gpu_id=None, importance_type='gain',
+              interaction_constraints=None, learning_rate=0.3953676194147615,
+              max_delta_step=None, max_depth=2,
+              min_child_weight=0.6016052934017583,
+              monotone_constraints=None, n_estimators=403, n_jobs=None,
+              num_parallel_tree=None, random_state=24, reg_alpha=None,
+              reg_lambda=9, scale_pos_weight=None, subsample=None,
+              tree_method=None, validate_parameters=None, verbosity=None),
+                           'ORXGB': XGBClassifier(base_score=None, booster=None, colsample_bylevel=None,
+                                                  colsample_bynode=None, colsample_bytree=None, gamma=0.7136729564393853, gpu_id=None,importance_type='gain',interaction_constraints=None,learning_rate=0.373594532507944,max_delta_step=None, max_depth=2,min_child_weight=0.4353841218296548,monotone_constraints=None, n_estimators=491, n_jobs=None,num_parallel_tree=None, random_state=24, reg_alpha=None,reg_lambda=10, scale_pos_weight=None, subsample=None,tree_method=None, validate_parameters=None, verbosity=None),
+                           'OPLGBM':LGBMClassifier(colsample_bytree=0.7198676834288892,
+               learning_rate=0.03214493877467912, max_depth=9,
+               min_child_samples=125, n_estimators=474, num_leaves=3294,
+               random_state=24, reg_alpha=0.6829612591522931,
+               subsample_for_bin=171850),
+                           'ORLGBM': LGBMClassifier(colsample_bytree=0.602419230596995,
+               learning_rate=0.017795658180160306, max_depth=7,
+               min_child_samples=25, n_estimators=494, num_leaves=4087,
+               random_state=24, reg_alpha=0.22001189225431103,
+               subsample_for_bin=229955)
                           }
         mdict.update(warm_start_dict)
         
@@ -572,7 +594,8 @@ if __name__ == '__main__':
     print(scores_indep)
     
     # TODO: save scores_indep
-    pd.DataFrame(scores_indep).to_csv('./models/{}/ALLSCORES.csv'.format(LABEL), header=False, index=False, sep=',')
+    filename = './models/{}/ALLSCORES.csv'.format(LABEL) if not WARM_START else './models/{}/SLSCORES.csv'.format(LABEL)
+    pd.DataFrame(scores_indep).to_csv(filename, header=False, index=False, sep=',')
     
     print("COMPLETED!")
     print("|"*40)
