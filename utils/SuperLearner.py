@@ -82,10 +82,6 @@ class SuperLearner:
     def scores(self, X_test, y_test):
         
         preds = self._super_learner_predictions(X_test)
-    
-        accuracy =  accuracy_score(y_test, preds)
-        fscore = f1_score(y_test, preds)
-        recall = recall_score(y_test, preds)
         
         # non threshold scores:
         works = True 
@@ -111,8 +107,7 @@ class SuperLearner:
             # else, save that these scores aren't possible (only binary prediction)
             roc_auc, prc_auc = 'only binary prediction', 'only binary prediction'
 
-        scores = [self.model_name, roc_auc, prc_auc, accuracy, fscore, recall]
-        print(scores)
+        scores = [self.model_name, roc_auc, prc_auc]
         
         return scores
     

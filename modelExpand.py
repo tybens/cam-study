@@ -31,11 +31,7 @@ def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=
 
     # fit and score on large dataset
     superLearner.fit(X_train, y_train)
-    preds = superLearner.predict_proba(X_test)[:, 1]
-    roc_score = roc_auc_score(y_test, preds)
-    prc_score = average_precision_score(y_test, preds)
-
-    scores = ["SuperLearner fit on large train data", roc_score, prc_score]
+    scores = superLearner.scores(X_test, y_test)
     print(scores)
     
     # save model as superlearner object
@@ -108,12 +104,9 @@ def main():
             
             
             # fit the data with dropped cols to new models
+            superLearner.model_name = name
             superLearner.fit(X_train, y_train)
-            preds = superLearner.predict_proba(X_test)[:, 1]
-            roc_score = roc_auc_score(y_test, preds)
-            prc_score = average_precision_score(y_test, preds)
-
-            scores = [name, roc_score, prc_score]
+            scores = superLearner.scores(X_test, y_test)
 
             ALLSCORES.append(scores)
             # save the models

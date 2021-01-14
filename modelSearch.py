@@ -28,10 +28,10 @@ from optuna.samplers import TPESampler
 optuna.logging.set_verbosity(optuna.logging.WARNING) # comment this output optuna progress
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
-from mlens.ensemble import SuperLearner
 
 # local relative imports:
 from utils.cleaning import clean, str2bool # clean for processing data, str2bool for command line operability
+from utils.SuperLearner import SuperLearner # I made a SuperLearner framework!
 
 class Optimizer:
     """ Optimization suite as adapted from optuna's framework
@@ -323,7 +323,7 @@ def ET(out_queue, score_queue):
     out_queue.put(retdict)
 
 
-def SL_fit_and_save(superLearner, crossvalscore, model_name):
+def SL_fit_and_save(superLearner, crossvalscore):
     """ Function for final testing and saving of optimized super learner ensemble
     
     The final scores of the optimized model ensemble are obtained, the superlearner is pickled 
@@ -332,31 +332,34 @@ def SL_fit_and_save(superLearner, crossvalscore, model_name):
     Arguments
     ---------
     superLearner : object
-        a SuperLearner mlens object
+        a SuperLearner object as defined in utils.SuperLearner
+    crossvalscore : float
+        The best cross-validation score obtianed during the optuna study
         
     Returns
     -------
-    list({str, float})
-        A list of the scores of this particular ensemble. [label of model, AUROC, AUPRC, crossvalscore]
+    list(list({str, float}))
+        A 2d list of the scores of this particular ensemble and its basemodels. [label of model, AUROC, AUPRC, crossvalscore]
     
     """
+    
+    model_name = superLearner.model_name
     
     # fit the optimized hyperparameter superlearner on the training set
     superLearner.fit(X_train, y_train)
     # score it based on validation set
-    preds = superLearner.predict(X_test)[:, 1]
-    roc_score = roc_auc_score(y_test, preds)
-    prc_score = average_precision_score(y_test, preds)
+    scores = superLearner.scores(X_test, y_test)
+    basemodelScores = superLearner.basemodelScores(X_test, y_test)
     
-    scores = [model_name, roc_score, prc_score, crossvalscore]
     scores.append(crossvalscore)
+    basemodelScores.append(scores) # append because scores is 1d
     
     # save the SuperLearner object
     filename = './models/{}/SuperLearner{}.sav'.format(LABEL, model_name)
     pickle.dump(superLearner, open(filename, 'wb'))
     
     
-    return scores
+    return basemodelScores
     
 def SL():
     """Function for optimization of super learner ensembles
@@ -379,24 +382,25 @@ def SL():
     def create_model(trial):
         model_names = list()
         optimized_models = ['OARF', 'OFRF', 'OPRF', 'ORRF', 'OAXGB', 'OFXGB', 'OPXGB', 'ORXGB', 'OALGBM', 'OFLGBM', 'OPLGBM', 'ORLGBM', 'OADT', 'OFDT', 'OPDT', 'ORDT', 'OAKNN', 'OFKNN', 'OPKNN', 'ORKNN', 'OAABC', 'OFABC', 'OPABC', 'ORABC', 'OAET', 'OFET', 'OPET', 'ORET']
-        models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'ET', 'MLP', 'GB', ] # 'RDG', 'PCP', 'PAC',  'SGD'
+        models_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC'] + [i for i in TOTEST if i in optimized_models] + ['LR', 'ABC', 'ET', 'MLP', 'GB', 'RDG', 'PCP', 'PAC',  'SGD']
 
-        head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'ET', 'MLP', 'GB'] # , 'SGD' , 'RDG', 'PCP', 'PAC' (don't have predict_proba)
+        head_list = ['RF', 'XGB', 'LGBM', 'DT', 'KNN', 'BC', 'LR', 'ABC', 'ET', 'MLP', 'GB', 'SGD' , 'RDG', 'PCP', 'PAC']
         n_models = trial.suggest_int("n_models", 2, 10)
         for i in range(n_models):
             model_item = trial.suggest_categorical('model_{}'.format(i), models_list)
             if model_item not in model_names:
                 model_names.append(model_item)
 
-        superLearner = SuperLearner()
-        
         # add base models as layers
+        models = list()
         for item in model_names:
-            superLearner.add(mdict[item])
+            models.append(mdict[item])
+            
         # add meta model
         head = trial.suggest_categorical('head', head_list)
         metaModel = copy.deepcopy(mdict)[head]
-        superLearner.add_meta(metaModel, proba=True)
+        
+        superLearner = SuperLearner(models, metaModel)
         
         return superLearner
     
@@ -433,15 +437,13 @@ def SL():
                 baseModels.append(mdict[item])
                 
             metaModel = copy.deepcopy(mdict[head])
-            superLearner = SuperLearner()
-            superLearner.add(baseModels, proba=True)
-            superLearner.add_meta(metaModel, proba=True)
+            superLearner = SuperLearner(baseModels, metaModel, model_name=m)
             
             # crossvalidation best score:
             crossvalscore = study.best_value
             
             # fit the optimized SuperLearner and save it
-            scores.extend(SL_fit_and_save(superLearner, crossvalscore, m)) # extend because SL_fit_and_save returns 2-d array
+            scores.extend(SL_fit_and_save(superLearner, crossvalscore)) # extend because SL_fit_and_save returns 2-d array
             
     return scores
     

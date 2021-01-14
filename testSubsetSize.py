@@ -28,10 +28,10 @@ from optuna.samplers import TPESampler
 optuna.logging.set_verbosity(optuna.logging.WARNING) # comment this output optuna progress
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
-from mlens.ensemble import SuperLearner
 
 # local relative imports:
 from utils.cleaning import clean, str2bool # clean for processing data, str2bool for command line operability
+from utils.SuperLearner import SuperLearner
 
 
 def main(LABEL, subsets):
@@ -67,14 +67,15 @@ def main(LABEL, subsets):
         sampled_y_train = sampled_train['admit_binary']
         sampled_X_train = sampled_train.drop('admit_binary', axis=1)
         
+        # change superLearner name
+        superLearner.model_name = str(subsetProportion)
+        
         # fit on the sampled set of data (sampled to be proportional)
         superLearner.fit(sampled_X_train, sampled_y_train)
+        
         # score it based on validation set
-        preds = superLearner.predict_proba(X_test)[:, 1]
-        roc_score = roc_auc_score(y_test, preds)
-        prc_score = average_precision_score(y_test, preds)
-
-        scores = [str(subsetProportion), roc_score, prc_score]
+        scores = superLearner.scores(X_test, y_test)
+        print(scores)
         
         # save all scores
         ALLSCORES.append(scores)
