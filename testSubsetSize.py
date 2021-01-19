@@ -40,7 +40,7 @@ def main(LABEL, subsets):
     
     
     # load in superLearner object
-    filename_superlearner = './models/{}/SuperLearner{}SL'.format(LABEL, OPTIMIZED)
+    filename_superlearner = './models/{}/SuperLearner{}SL.sav'.format(LABEL, OPTIMIZED)
     superLearner = pickle.load(open(filename_superlearner, 'rb'))
     # alternatively, make a new superlearner for the heck of it
         # baseModels = [LGBMClassifier(), AdaBoostClassifier(), XGBClassifier(), RandomForestClassifier()]
