@@ -12,7 +12,7 @@ from utils.cleaning import str2bool
 from utils.SuperLearner import SuperLearner
 
 
-def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=None):  
+def prep(X, y, X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=None):  
     """ Prepping the model to be ready to be used by productionApp
     
     Parameters
@@ -27,7 +27,7 @@ def prep(X_train, X_test, y_train, y_test, VITALS, LABEL, RAND_STATE, OPTIMIZED=
         Default is None. The score metric ('OB', 'OF', 'OP') on which the model was optimized. 
     """
     filename_superlearner = './models/{}/SuperLearner{}SL.sav'.format(LABEL, OPTIMIZED)
-    superLearner = pickle.load(open(filename_meta, 'rb'))
+    superLearner = pickle.load(open(filename_superlearner, 'rb'))
 
     # fit and score on large dataset
     superLearner.fit(X_train, y_train)
@@ -69,8 +69,14 @@ def main():
     y = data_matched['admit_binary']
     X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2, shuffle=True, random_state=RAND_STATE)
     
+    # only using proportion of total sample size
+    train = pd.concat([X_train, y_train], axis=1)
+    sampled_train = train.sample(frac=PROP).reset_index(drop=True)
+    y_train = sampled_train['admit_binary']
+    X_train = sampled_train.drop('admit_binary', axis=1)
+    
     # initial prep: clean and save all the data matched to the data the model was trained on, save as MasterModel
-    prep(X_train, X_test, y_trian, y_test, VITALS=VITALS, LABEL=LABEL, OPTIMIZED=OPTIMIZED, RAND_STATE=RAND_STATE)
+    prep(X, y, X_train, X_test, y_train, y_test, VITALS=VITALS, LABEL=LABEL, OPTIMIZED=OPTIMIZED, RAND_STATE=RAND_STATE)
     
     # -- these files are created during the prep() call on line 26 --
     # load optimized models that will be expanded (to encompass all combination of features) 
@@ -111,7 +117,7 @@ def main():
             ALLSCORES.append(scores)
             # save the models
             filename = './models/{}/expanded/MasterModel{}.sav'.format(LABEL, uid)
-            pickle.dump(MasterModel, open(filename, 'wb'))
+            pickle.dump(superLearner, open(filename, 'wb'))
            
             # calculates and saves all_scores for the given fitted model and unique id
             
@@ -136,12 +142,14 @@ if __name__ == '__main__':
     parser.add_argument("--LABEL", "-l", type=str, help="str label of which study to load the models from")
     parser.add_argument("--OPTIMIZED", "-o", type=str, help="str how the model was optimized 'OF' for f-score, 'OP' for PRAUC, 'OR' for AUROC")
     parser.add_argument("--RAND_STATE", "-rs", type=int, help="This must be the same as it was for the modelSearch.py. Change the random_state through with np and sklearn work")
-    
+    parser.add_argument("--PROPORTION", "-p", type=float, help="The proportion of the training data to be used during fitting, float between 0 and 1")
+
     args = parser.parse_args()
 
     RAND_STATE = args.RAND_STATE
     LABEL = args.LABEL
     OPTIMIZED = args.OPTIMIZED
+    PROP = args.PROPORTION
     VITALS = False if 'n' in LABEL else True
     
     ALLSCORES = main()
