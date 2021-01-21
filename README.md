@@ -2,28 +2,21 @@
 
 `modelSearch.py` is how the models are tested and optimized and ensembled and saved.
 
-`cleaning.py` is how the raw data is cleaned to then be fit.
+`testSubsetSize.py` trains the selected super learner model on incremental proportions of training data to see the performance approach a maximum.
 
-`prepModel.py` shows how I convert the metamodel to a CalibratedClassifier as well as implement class weights and 'partially fit' it on all of the patient data n=200,000. It also shows how the content of `production_data/` is made and saved. 
+`modelExpand.py` takes every combination of possible missing values in an input patient and fits and saves a model to that specific combination. Prepares the expanded models for production use (saving models/LABEL/all_scores_IDENTIFIER.csv for use in figure generation) . Also, this allows for use in production to check for missing values in the input patient data and choose the correct model to predict accordingly.
 
-`modelExpand.py` takes every combination of possible missing values in an input patient and fits and saves a model to that specific combination. This then uses prepModel.py to prepare the expanded models for production use (saving models/LABEL/all_scores_IDENTIFIER.csv for use in figure generation) . Also, this allows `productionApp.py` to check for missing values in the input patient data and choose the correct model to predict accordingly.
+`utils/cleaning.py` is how the raw data is cleaned to then be fit.
 
+`utils/SuperLearner.py` is the super learner framework that I built. It holds the SuperLearner class that can be fit, output scores, and make predictions...
 
-#### Example `prepModel.py` call:
-```Bash
-python3 prepModel.py -b=3 -v=f -l='cw_100k1kcc_nvit' -o='OB' -lo=f
-```
-
-#### Example `modelExpand.py` call (after `prepModel.py` is called):
-```Bash
-python3 modelExpand.py -l='cw_100k1kcc_nvit'
-```
+`utils/__init__.py` holds calibrateMeta, a function to wrap the super learner's meta model in a CalibratedClassifier. However, because the production model appears to be calibrated (see the calibration curve), it is not currently used in the study.
 
 #### Sample slurm script (example `modelSearch.py` call) to find best models:
 
 ```Bash
 #!/bin/bash
-#SBATCH --job-name=mprocw100k1kcc_vit	 # create a short name for your job
+#SBATCH --job-name=study50kvit # create a short name for your job
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
@@ -34,11 +27,15 @@ python3 modelExpand.py -l='cw_100k1kcc_nvit'
 #SBATCH --mail-user=tb19@princeton.edu
 echo "||||||||||||||||||||||||||||||||||||||||||||||||||"
 echo "--------------------------------------------------"
-echo "Now with class weights and PRC AUC scoring!      "
 module purge
 module load anaconda3
 conda activate visualize
-l="mpro_cw_100k1kcc_vit"
+l="study50k_allmodels_vit"
 mkdir ./models/$l
-python3 modelSearch.py -c=f -nccs=1000 -ss=100000 -rs=51 -b=3 -v=t -sav=t -l=$l -ad=f
+python3 modelSearch.py -c=f -nccs=1000 -ss=50000 -rs=24 -v=t -sav=t -l=$l -ad=f
+```
+
+#### Example `modelExpand.py` call:
+```Bash
+python3 modelExpand.py -l="study50k_allmodels_vit" -o='OP' -rs=24 -p=0.85
 ```
