@@ -16,5 +16,6 @@ logRegTest.py
 # Files too large for github
 models/
 data/
+production_data/
 models
 data

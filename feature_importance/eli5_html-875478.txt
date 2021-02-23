@@ -1,0 +1,1269 @@
+<style>
+    table.eli5-weights tr:hover {
+        filter: brightness(85%);
+    }
+</style>
+
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+
+    
+
+    
+
+    
+
+    
+
+    
+        <table class="eli5-weights eli5-feature-importances" style="border-collapse: collapse; border: none; margin-top: 0em; table-layout: auto;">
+    <thead>
+    <tr style="border: none;">
+        <th style="padding: 0 1em 0 0.5em; text-align: right; border: none;">Weight</th>
+        <th style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">Feature</th>
+    </tr>
+    </thead>
+    <tbody>
+    
+        <tr style="background-color: hsl(120, 100.00%, 80.00%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.1066
+                
+                    &plusmn; 0.0023
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                ESI_level
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 87.07%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0572
+                
+                    &plusmn; 0.0013
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                age
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 95.79%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0115
+                
+                    &plusmn; 0.0010
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                RR
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 96.12%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0103
+                
+                    &plusmn; 0.0007
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                HR
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 96.36%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0093
+                
+                    &plusmn; 0.0009
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                ambulance
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.33%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0031
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_CHEST PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.43%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0028
+                
+                    &plusmn; 0.0004
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                BP_sys
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.46%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0027
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                BP_dia
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.73%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0021
+                
+                    &plusmn; 0.0004
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                temp
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.84%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0018
+                
+                    &plusmn; 0.0005
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                O2
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 98.96%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0016
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_PSYCHIATRIC EVALUATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.00%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0015
+                
+                    &plusmn; 0.0004
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ABDOMINAL PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.05%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0014
+                
+                    &plusmn; 0.0003
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_HYPERTENSION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.13%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0012
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_HIP PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.13%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0012
+                
+                    &plusmn; 0.0003
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_DIZZINESS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.14%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0012
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ALLERGIC REACTION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.19%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0011
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ABNORMAL LAB
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.27%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0009
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_HEADACHE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.30%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0009
+                
+                    &plusmn; 0.0003
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_MOTOR VEHICLE CRASH
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.35%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0008
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_SUICIDAL
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.36%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0008
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                sex_Female
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.41%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0007
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ABSCESS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.41%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0007
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_SHORTNESS OF BREATH
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.42%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0007
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FLANK PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.45%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_CELLULITIS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.47%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_URINARY RETENTION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.47%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_PALPITATIONS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.48%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_EYE PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.49%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_HEAD INJURY
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.49%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WOUND INFECTION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.49%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0006
+                
+                    &plusmn; 0.0003
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_BODY FLUID EXPOSURE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.50%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0005
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_STROKE SYMPTOMS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.53%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0005
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ANXIETY
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.55%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0005
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_NOSE BLEED
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.56%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0005
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                sex_Male
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.56%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0005
+                
+                    &plusmn; 0.0004
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_LACERATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.59%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0004
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ALCOHOL INTOXICATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.59%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0004
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ALTERED MENTAL STATUS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.65%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_CONSTIPATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.65%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_COUGH
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.65%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_POSSIBLE SEXUAL ASSAULT
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.66%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_SHOULDER PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.67%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WEAKNESS - GENERALIZED
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.68%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FOOT PROBLEM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.69%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0003
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_EYE PROBLEM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.72%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_PANIC ATTACK
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.72%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_TESTICLE PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.74%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_RECTAL BLEEDING
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.74%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_URINARY CATHETER PROBLEM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.75%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_CEREBROVASCULAR ACCIDENT
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.75%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FLU SYMPTOMS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.76%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_VAGINAL BLEEDING
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.76%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_RAPID HEART RATE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.77%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_GI BLEEDING
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.77%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                year_2017
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.78%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_VOMITING BLOOD
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.78%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WOUND CHECK
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.78%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_num
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.79%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_JAUNDICE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.79%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ALLEGED DOMESTIC VIOLENCE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.79%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0002
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_DIARRHEA
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.80%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_VOMITING
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.80%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0002
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_SHOULDER INJURY
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.81%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FEVER
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.81%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_URI
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.81%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ASTHMA
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.81%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_EXTREMITY WEAKNESS
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.82%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FALL
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.83%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_SUICIDE ATTEMPT
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.83%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_BLACK OR BLOODY STOOL
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.83%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_STROKE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.83%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FOOT INFECTION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.83%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WRIST INJURY
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.86%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WRIST PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.86%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_POST-OP PROBLEM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.86%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FAILURE TO THRIVE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_BRADYCARDIA
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_LEG PROBLEM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_IRREGULAR HEART BEAT
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_HEAD LACERATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_PRIAPISM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.88%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ANEMIA
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.89%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_WITHDRAWAL
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.89%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_URINARY SYMPTOM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.89%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_MIGRAINE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.89%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_BACK PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.89%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_APHASIA
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_BLOOD IN URINE
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ATRIAL FIBRILLATION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_LABOR IMMINENT
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                age_group_Geriatric_80+
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                year_2018
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_PELVIC PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.90%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FECAL IMPACTION
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0001
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ARM PAIN
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0000
+                
+                    &plusmn; 0.0001
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                month_1
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0000
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_ASSAULT VICTIM
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0000
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                CC_FACIAL DROOP
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0000
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                RR_thresh
+            </td>
+        </tr>
+    
+        <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+            <td style="padding: 0 1em 0 0.5em; text-align: right; border: none;">
+                0.0000
+                
+                    &plusmn; 0.0000
+                
+            </td>
+            <td style="padding: 0 0.5em 0 0.5em; text-align: left; border: none;">
+                month_10
+            </td>
+        </tr>
+    
+    
+        
+            <tr style="background-color: hsl(120, 100.00%, 99.91%); border: none;">
+                <td colspan="2" style="padding: 0 0.5em 0 0.5em; text-align: center; border: none; white-space: nowrap;">
+                    <i>&hellip; 606 more &hellip;</i>
+                </td>
+            </tr>
+        
+    
+    </tbody>
+</table>
+    
+
+    
+
+
+    

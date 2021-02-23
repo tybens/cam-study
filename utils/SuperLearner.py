@@ -79,6 +79,11 @@ class SuperLearner:
         # return parameters
         return { 'baseModels': self.baseModels, 'metaModel': self.metaModel, 'model_name':self.model_name,'is_fit': self.is_fit}
     
+    def score(self, X_test, y_test):
+        roc = self.scores(X_test, y_test)[1]
+        
+        return roc
+    
     def scores(self, X_test, y_test):
         
         preds = self._super_learner_predictions(X_test)
